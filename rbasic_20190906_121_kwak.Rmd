@@ -5,7 +5,6 @@ output: html_notebook
 
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
-
 -----------------------------------------------------
 #3.2.1 Objects
 How to solve several quandratic equations of the form ax^2+bx+c=0. The quadratic formula gives us the solutions; but change depending on the values of a, b, and c
