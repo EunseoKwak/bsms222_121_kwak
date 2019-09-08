@@ -625,7 +625,7 @@ murder_rate[ind]
 
 # 3.14.5 %in%
 
-we can use the function %in% to see whether or not each element of a first vector is in a second
+We can use the function %in% to see whether or not each element of a first vector is in a second
 
 ```{r}
 c("Boston", "Dakota", "Washington") %in% murders$state
