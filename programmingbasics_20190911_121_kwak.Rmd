@@ -155,7 +155,7 @@ search()
 
 The first entry in this list is the global environment which includes all the objects you define
 
-stats filter
+stats filter?
 you can use ::
 
 ```{r}
