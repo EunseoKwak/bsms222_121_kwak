@@ -142,7 +142,6 @@ two packages use the same name for two different functions. DPLYR and STATS pack
 
 ```{r}
 library(dplyr)
-
 ```
 
 so what does R do when we type filter?
