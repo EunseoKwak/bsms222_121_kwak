@@ -1,0 +1,218 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# 4.4 For-loops
+
+sum of 1+2+... +n is n(n+1)/2
+What if we are not sure?
+
+```{r}
+compute_s_n <- function(n) {
+  x <- 1:n
+  sum(x)
+}
+  
+```
+
+how can we compute Sn for various values of n?
+We us for-loops here: performing same task over and over, changing value of n
+
+```{r}
+for(i in 1:5){
+  print(i)
+}
+```
+
+simple example of for-loop
+
+```{r}
+m <- 25
+s_n <- vector(length = m) # create an empty vector
+for(n in 1:m){
+  s_n[n] <- compute_s_n(n)
+}
+```
+
+in each iteration n=1, ... we compute Sn and store it in the nth entry of s_n
+
+```{r}
+n<- 1:m
+plot(n, s_n)
+```
+
+quadratic; you're right
+n(n+1)/2
+
+```{r}
+head(data.frame(s_n = s_n, formula = n*(n+1)/2))
+```
+
+we can also overlay two results by using function 'lines'
+
+```{r}
+plot(n, s_n)
+lines(n, n*(n+1)/2)
+```
+
+# 4.5 Vectorization and functionals
+
+we rarely use for-loops in R
+vectorization is preferred - results in shorter, clearer code
+
+```{r}
+x<- 1:10
+sqrt(x)
+y <- 1:10
+x*y
+```
+
+not all functions work this way
+compute_s_n does not work element-wise
+
+```{r}
+n <- 1:25
+compute_s_n(n)
+```
+
+functionals; functions that help us apply the same function to each entry in a vector, matrix, data frame or list
+'sapply' perform element-wise operations on any function
+
+```{r}
+x <- 1:10
+sapply(x, sqrt)
+```
+
+each element of x is passed on to the function sqrt
+the result is a vector of the same length as the original x
+for-loops can be written as:
+
+
+```{r}
+n <- 1:25
+s_n <- sapply(n, compute_s_n)
+plot(n, s_n)
+```
+
+Other functionals are apply, lapply, tapply, mapply, vapply, and replicate
+
+
+# 4.6 Exercises
+
+Q1. Return?  
+```{r}
+x <- c(1,2,-3,4)
+
+if(all(x>0)){
+  print("All Postives")
+} else{
+  print("Not all positives")
+}
+```
+A1. Not all positives
+
+Q2. Which of the following expressions is always FALSE when at least one entry of a logical vector x is TRUE?
+
+A. all(x)
+B. any(x)
+C. any(!x)
+D. all(!x)
+
+A2. D
+
+Q3. The function nchar tells you how many characters long a character vector is. Write a line of code that assigns to the object new_names the state abbreviation when the state name is longer than 8 characters.
+
+A3. 
+```{r}
+library(dslabs)
+data(murders)
+new_names <- ifelse(nchar(murders$state)>8, murders$abb, murders$state)
+new_names
+```
+
+Q4. Create a function sum_n that for any given value, say n, computes the sum of the integers from 1 to n (inclusive). Use the function to determine the sum of integers from 1 to 5,000.
+
+```{r}
+sum_n <- function(n) {
+  x <- 1:n
+  sum(x) 
+}
+
+```
+
+```{r}
+sum_n(5000)
+```
+
+Q5. Create a function altman_plot that takes two arguments, x and y, and plots the difference against the sum.
+
+A5. 
+```{r}
+altman_plot <- function(x, y) {
+plot(x+y, abs(x-y))  
+}
+```
+
+Q6. After running the code below, what is the value of x?
+
+```{r}
+x <- 3
+my_func <- function(y){
+  x <- 5
+  y+5
+}
+```
+
+A6. 3
+
+Q7. Write a function compute_s_n that for any given n computes the sum 1^2+ .... n^2. report the value of the sm when n=10
+
+```{r}
+compute_s_n <- function(n){
+  x<- 1:n
+  sum(x^2)
+}
+```
+
+```{r}
+compute_s_n(10)
+```
+
+Q8. Define an empty numerical vector s_n of size 25 using s_n <- vector("numeric", 25) and store in the results of s1, s2, ...s25 using a for-loop
+
+```{r}
+s_n <- vector("numeric", 25)
+for(i in 1:25){
+  s_n[i] <- compute_s_n(i)
+}
+s_n
+```
+
+Q9. Repeat exercise 8, but this time use sapply.
+
+```{r}
+x<- 1:25
+sapply(x, compute_s_n)
+```
+
+Q10. Repeat exercise 8, but this time use map_dbl.
+
+```{r}
+?map_dbl
+library(purrr)
+map_dbl(n,compute_s_n)
+```
+
+Q11. plot Sn versus n
+
+```{r}
+plot(n, s_n)
+```
+
+Q12. confirm that the formula for this sum is Sn=n(n+1)(2n+1)/6
+
+```{r}
+plot(n, s_n)
+lines(n, n*(n+1)*(2*n+1)/6)
+```
