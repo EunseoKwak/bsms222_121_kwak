@@ -23,7 +23,6 @@ tidy!
 ```
 
 This wasn't this format originally. reshaped for dslabs package
-
 ```{r}
 #>       country 1960 1961 1962 1963 1964 1965
 #> 1     Germany 2.41 2.44 2.47 2.49 2.49 2.48
@@ -49,9 +48,9 @@ D. co2 is not tidy: to be tidy we would have to wrangle it to have three columns
 
 ```{r}
 co2
-# A1. D
-
 ```
+
+A1. D
 
 Q2. Examine the built-in dataset ChickWeight. Which of the following is true:
 
@@ -64,10 +63,13 @@ C. ChickWeight is not a tidy: we are missing the year column.
 D. ChickWeight is tidy: it is stored in a data frame.
 
 ```{r}
+
 ChickWeight
 str(ChickWeight)
-# A2. B
+
 ```
+
+A2. B
 
 Q3. Examine the built-in dataset BOD. Which of the following is true:
 
@@ -80,9 +82,12 @@ C. BOD is tidy: each row is an observation with two values (time and demand)
 D. BOD is tidy: all small datasets are tidy by definition.
 
 ```{r}
+
 BOD
-# A3: C
+
 ```
+
+A3. C
 
 Q4. Which of the following built-in datasets is tidy (you can pick more than one):
 
@@ -98,16 +103,7 @@ E. Orange
 
 F. UCBAdmissions 
 
-```{r}
-BJsales
-EuStockMarkets
-DNase
-Formaldehyde
-Orange
-UCBAdmissions
-
-# A4. C, D, E, F
-```
+A4. C, D, E,F 
 
 # 5.3 Manipulating Data frames
 
@@ -148,9 +144,7 @@ Suppose we want to filter data table only to show the entries for which the murd
 we can use the unquoted variable names from murders
 
 ```{r}
-
 filter(murders, rate <=0.71)
-
 ```
 
 # 5.3.3 Selecting columns with select
@@ -167,12 +161,10 @@ the first argument is an object, and next are variable names
 # 5.4 Exercises
 
 1. Load the dplyr package and the murders dataset
-
 ```{r}
 
 library(dplyr)
 library(dslabs)
-
 data(murders)
 ```
 
@@ -186,9 +178,6 @@ Use the function mutate to add a murders column named rate with the per 100,000 
 
 ```{r}
 
-# A1. 
-
-names(murders)
 murders <- mutate(murders,per_tenthousand_rate= total/population * 10^5)
 murders
 
@@ -202,7 +191,6 @@ murders <- mutate(murders, rank=rank(-per_tenthousand_rate))
 murders
 
 ```
-
 
 Q3. With dplyr, we can use select to show only certain columns. For example, with this code we would only show the states and population sizes:
 
