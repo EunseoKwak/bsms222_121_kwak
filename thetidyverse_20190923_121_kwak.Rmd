@@ -585,7 +585,6 @@ D. murders is not in tidy format and is stored in a data frame.
 data(murders)
 class(murders)
 ```
-
 # Answer: B
 
 2. Use as_tibble to covert the murders data table into a tibble and save it in an object called murders_tibble.
