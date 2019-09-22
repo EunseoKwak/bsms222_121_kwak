@@ -586,7 +586,7 @@ data(murders)
 class(murders)
 ```
 
-<B>
+# Answer: B
 
 2. Use as_tibble to covert the murders data table into a tibble and save it in an object called murders_tibble.
 
