@@ -1,0 +1,109 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{bash}
+wget https://raw.githubusercontent.com/joonan30/bsms222_123_an/master/analyze_gencode.Rmd
+```
+
+
+```{bash}
+# Run from your terminal, not R console
+wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_31/gencode.v31.basic.annotation.gtf.gz
+
+# Once you downloaded the file, you won't need to download it again. So please comment out the command above by adding #
+```
+
+```{bash}
+# Run from your terminal, not R console
+gzcat gencode.v31.basic.annotation.gtf.gz | head
+```
+
+```{r}
+library(tidyverse)
+library(readr)
+library(dplyr)
+```
+
+
+```{r}
+d = read_delim('gencode.v31.basic.annotation.gtf.gz', 
+               delim='\t', skip = 5, 
+               progress = F,
+               col_names = cols)
+```
+
+```{r}
+# Assign column names according to the GENCODE instruction.
+cols = c('chrom', 'source', 'feature_type', 'start', 'end', 'score', 'strand', 'phase', 'info')
+```
+
+
+```{r}
+write.table(d2, 'table.gene_genecode.20190918.txt', sep='\t', quote=F, row.names=F, col.names=T)
+```
+
+
+```{r}
+d = read_delim('table.gene_genecode.20190918.txt', 
+               delim='\t', skip = 5, progress = F, 
+               col_names = cols)
+```
+
+# Q1.  
+
+transcript만 찾은 후에, 거기서 transcript_support_level이 각각 몇개씩 나오는지 세어봅니다. 
+transcript_support_level 정보는 여기에 있어요. 
+https://www.gencodegenes.org/pages/data_format.html 이렇게 하면, 
+transcript_support_level이 1,2,3,4,5, NA 별로 몇개씩 나오는지 셀수 있습니다.
+
+```{r}
+# First filter transcripts and create a data frame.
+d2 <- d %>% filter(feature_type == 'transcript')
+
+# Now apply the functions. 
+d2$transcript_support_level <- as.character(do.call(rbind.data.frame, 
+                                                    strsplit(d2$info, 'transcript_support_level\\s+"'))[[2]])
+
+d2$transcript_support_level <- as.character(do.call(rbind.data.frame, 
+                                                    strsplit( d2$transcript_support_level, '\\"'))[[1]])
+```
+
+```{r}
+table(d2$transcript_support_level=='gene_id ')
+d2$transcript_support_level2 <- ifelse(d2$transcript_support_level=='gene_id ', NA, d2$transcript_support_level)
+```
+
+```{r}
+table(d2$transcript_support_level2)
+```
+
+
+```{r}
+d2 %>% group_by(transcript_support_level2) %>% summarise(total=n())
+```
+
+# Q2.
+
+얻은 숫자를 gene biotype에 따라 나누자. 각각 의 그룹이 몇 개씩 등장하는가?
+
+```{r}
+# Now apply the functions. 
+d2$gene_biotype <- as.character(do.call(rbind.data.frame, 
+                                                    strsplit(d2$info, 'gene_type\\s+"'))[[2]])
+
+d2$gene_biotype <- as.character(do.call(rbind.data.frame, 
+                                                    strsplit(d2$gene_biotype, '\\"'))[[1]])
+
+d2 %>% group_by(transcript_support_level2, gene_biotype) %>% summarise(total=n())
+
+```
+
+# Q3.
+
+얻은 숫자를 HAVANA와 ENSEMBL에 따라 나누자. 각각 이 그룹이 몇 개씩 등장하는가?
+
+```{r}
+d2 %>% group_by(transcript_support_level2, source) %>% summarise(total=n())
+```
