@@ -31,12 +31,16 @@ library(dplyr)
 d = read_delim('gencode.v31.basic.annotation.gtf.gz', 
                delim='\t', skip = 5, 
                progress = F,
-               col_names = cols)
+               col_names = F)
 ```
 
 ```{r}
 # Assign column names according to the GENCODE instruction.
 cols = c('chrom', 'source', 'feature_type', 'start', 'end', 'score', 'strand', 'phase', 'info')
+```
+
+```{r}
+d2 <- d %>% filter(X3 == 'transcript')
 ```
 
 
@@ -46,7 +50,8 @@ write.table(d2, 'table.gene_genecode.20190918.txt', sep='\t', quote=F, row.names
 
 
 ```{r}
-d = read_delim('table.gene_genecode.20190918.txt', 
+rm(d)
+d2 = read_delim('table.gene_genecode.20190918.txt', 
                delim='\t', skip = 5, progress = F, 
                col_names = cols)
 ```
@@ -60,8 +65,6 @@ transcript_support_level이 1,2,3,4,5, NA 별로 몇개씩 나오는지 셀수 �
 
 ```{r}
 # First filter transcripts and create a data frame.
-d2 <- d %>% filter(feature_type == 'transcript')
-
 # Now apply the functions. 
 d2$transcript_support_level <- as.character(do.call(rbind.data.frame, 
                                                     strsplit(d2$info, 'transcript_support_level\\s+"'))[[2]])
@@ -78,7 +81,6 @@ d2$transcript_support_level2 <- ifelse(d2$transcript_support_level=='gene_id ', 
 ```{r}
 table(d2$transcript_support_level2)
 ```
-
 
 ```{r}
 d2 %>% group_by(transcript_support_level2) %>% summarise(total=n())
