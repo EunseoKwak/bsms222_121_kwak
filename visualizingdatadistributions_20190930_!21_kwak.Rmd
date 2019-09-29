@@ -345,6 +345,7 @@ The idea of a QQ-plot is that if your data is well approximated by normal distri
 3. define a vector of theoretical quantiles for the proportions for a normal distribution with the same average and SD
 4. plot the sample quantiles versus the theoretical quantiles
 
+
 ```{r}
 p <- seq(0.05, 0.95, 0.05)
 ```
