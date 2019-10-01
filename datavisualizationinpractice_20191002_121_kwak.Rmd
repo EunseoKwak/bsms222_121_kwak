@@ -650,6 +650,7 @@ useful when we want to highlight differences near 0 or 1.
 
 # 10.8.2 Show the data
 
+
 Jumping to this conclusion based on a plot showing averages is referred to as the ecological fallacy.
 
 relationship between survival rates and income is only observed for the averages at the region level.
