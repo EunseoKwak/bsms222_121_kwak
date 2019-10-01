@@ -59,7 +59,7 @@ European countries on this list have higher child mortality rates: Poland, Russi
 Pakistan has a much higher rate than Vietnam, South Africa has a much higher rate than Thailand.
 
 -> WE ARE MISINFORMED!!
-+ Stat이 중요한 이유
++ Stat이 중요한 이유!
 
 # 10.2 Scatterplots
 
