@@ -637,6 +637,7 @@ argument 'break' -> set location of the axes labels
 
 # 10.8.1 Logistic transformation
 
+
 f(p) = log(p/(1-p))
 
 p : proportion or probability
