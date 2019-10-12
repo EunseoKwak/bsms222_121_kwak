@@ -1,0 +1,240 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Chapter 12 Robust summaries
+
+```{r}
+library(tidyverse)
+library(dslabs)
+```
+
+## 12.1 Outliers
+
+Outliers : common in data science
+
+How do we distinguish an outlier from measurements that were too big or too small simply due to expected variability?
+
+collecting demography data for a group of males
+
+```{r}
+library(dslabs)
+data(outlier_example)
+str(outlier_example)
+```
+
+heights are usually well approximated by a normal distribution >>> summarizes the data with average and standard deviation
+
+```{r}
+mean(outlier_example)
+sd(outlier_example)
+```
+
+the standard deviation is over 7 inches
+95% of this population will have heights between -9.489, 21.697 feet, which does not make sense
+
+```{r}
+qplot(outlier_example)
+```
+
+at least one value that is nonsensical
+
+```{r}
+boxplot(outlier_example)
+```
+
+## 12.2 Median
+
+When we have an outlier like this, the average can become very large.
+
+median-half the values are smaller and the other half are bigger- is robust to such outliers. 
+
+```{r}
+median(outlier_example)
+```
+
+## 12.3 The inter quartile range (IQR)
+
+box in boxplots: defined by first and third quartile
+50% of the data is within this range
+IQR: Difference btwn 3rd and 1st quartile
+IQR / 1.349 approximates the standard deviation of the data had an outlier not been present.
+
+```{r}
+IQR(outlier_example) / 1.349
+```
+
+## 12.4 Tukey's definition of an outlier
+
+points falling outside the whiskers of the boxplot are referred to as outliers.
+The top whisker ends at the 75th percentile plus 1.5IQR. the bottom whisker ends at the 25th percentile minus 1.5IQR.
+
+```{r}
+q3 <- qnorm(0.75)
+q1 <- qnorm(0.25)
+iqr <- q3 - q1
+r <- c(q1 - 1.5*iqr, q3 + 1.5*iqr)
+r
+```
+
+if we have 1000 data points that are normally distributed, we expect to see about 7 outside of this range. But these would not be outliers since we expect to see them under the typical variation.
+
+If we want an outlier to be rarer, we can increase the 1.5 to a larger number. 3: far out outliers. With a normal distribution, 100% of the data falls in this interval
+
+can be controlled by the 'outlier.size' argument in 'geom_boxplot'
+
+```{r}
+max_height <- quantile(outlier_example, 0.75) + 3*IQR(outlier_example)
+max_height
+```
+
+data is in fact normally distributed as expected:
+
+```{r}
+x <- outlier_example[outlier_example < max_height]
+qqnorm(x)
+qqline(x)
+```
+
+## 12.5 Median Absolute Deviation
+
+median absolute deviation (MAD) : compute the median, then for each value we compute the distance btwn that value and the median. MAD: median of distances.
+
+needs to be multiplied by 1.4826 to assure it approximates the actual standard deviation.
+
+function 'mad': has this correction
+ 
+```{r}
+mad(outlier_example)
+```
+
+## 12.6 Exercises
+
+```{r}
+install.packages("HistData")
+```
+
+```{r}
+library(HistData)
+data(Galton)
+x <- Galton$child
+```
+
+1. Compute the average and median of these data.
+
+```{r}
+mean(x)
+median(x)
+```
+
+2. Compute the median and median absolute deviation of these data.
+
+```{r}
+median(x)
+mad(x)
+```
+
+3. Now suppose Galton made a mistake when entering the first value and forgot to use the decimal point. You can imitate this error by typing:
+
+```{r}
+x_with_error <- x
+x_with_error[1] <- x_with_error[1]*10
+```
+
+How many inches does the average grow after this mistake?
+
+```{r}
+mean(x_with_error)-mean(x)
+```
+
+4. How many inches does the SD grow after this mistake?
+
+```{r}
+sd(x_with_error)-sd(x)
+```
+
+5. How many inches does the median grow after this mistake?
+
+```{r}
+median(x_with_error)-median(x)
+```
+
+6. How many inches does the MAD grow after this mistake?
+
+```{r}
+mad(x_with_error)-mad(x)
+```
+
+7. How could you use exploratory data analysis to detect that an error was made?
+
+A. Since it is only one value out of many, we will not be able to detect this.
+
+B. We would see an obvious shift in the distribution.
+
+__C. A boxplot, histogram, or qq-plot would reveal a clear outlier.__
+
+D. A scatter plot would show high levels of measurement error.
+
+8. How much can the average accidentally grow with mistakes like this? Write a function called error_avg that takes a value k and returns the average of the vector x after the first entry changed to k. Show the results for k=10000 and k=-10000.
+
+## 12.7 Case study: self-reported student heights
+
+```{r}
+library(dslabs)
+data("reported_heights")
+head(reported_heights)
+```
+
+```{r}
+reported_heights <- reported_heights %>%
+  mutate(original_heights = height, height = as.numeric(height))
+```
+
+height: character vector: some of the heights were not numbers; warning
+
+```{r}
+reported_heights %>% 
+  filter(is.na(height)) %>% 
+  head()
+```
+
+```{r}
+reported_heights <- filter(reported_heights, !is.na(height))
+```
+
+The average and standard deviation are different from the median and MAD
+
+```{r}
+reported_heights %>% 
+  group_by(sex) %>%
+  summarize(average = mean(height), sd = sd(height),
+            median = median(height), MAD = mad(height))
+```
+
+use function 'arrange' to look at the largest values
+
+```{r}
+reported_heights %>% 
+  arrange(desc(height)) %>% 
+  top_n(10, height)
+```
+
+Some are inches and some are centimeters!
+
+```{r}
+max_height <- quantile(reported_heights$height, .75) + 3*IQR(reported_heights$height)
+min_height <- quantile(reported_heights$height, .25) - 3*IQR(reported_heights$height)
+c(min_height, max_height)
+```
+
+```{r}
+reported_heights %>% 
+  filter(!between(height, min_height, max_height)) %>% 
+  select(original_heights) %>%
+  head(n=10)
+```
+
+2 mistakes : entires in centimeters turn out to be too large, entires of the form x.y(feet.inches) too small. some could be entries in meters
+we'll later learn for correcting these values and converting them into inches
+
