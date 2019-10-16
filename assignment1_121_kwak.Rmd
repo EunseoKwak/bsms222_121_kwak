@@ -1,0 +1,263 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Assignment 1
+## 3. Brainspan
+
+The development of the prefrontal cortex (PFC) is an immensely complex process. It begins as a simple neural tube that derives from the embryonic ectoderm and gradually develops into mature organization through immensely complicated and strictly regulated molecular and cellular processes. Recent advances in genome sequencing enables profiling gene expression across human tissues and developmental stages. Here we use the RNA-seq transcriptomic dataset from the BrainSpan atlas, a foundational resource for studying transcriptional mechanisms involved in human brain development. With the subset of the human dorsolateral prefrontal cortex, we will explore how gene expression changes from early fetal to late adulthood.
+
+There are two papers on the dataset (Kang et al. 2010, Miller et al. 2014). Please find background information - experimental design, techniques (RNA-seq), and findings for developing brain transcriptome.
+
+In the dataset, you will find three data frames.
+
++ e: RNA-seq expression
++ g: gene information
++ s: sample information
+For further information, please find the PDF link.
+
+## 탐구 주제
+
+BrainSpan dataset을 이용해서 __gene expression changes of voltaged-gated ion channel genes over development.__ 을 분석하고자 한다.
+Developmental stage에 따라 gene expression level이 어떻게 달라지는지 확인하는 것이다.
+크게 KCN(K+ 채널 gene), SCN(Na+ 채널 gene), CACN(Ca+ 채널 gene)의 gene expression을 다룰 것이며, 비교를 위해 protein_coding gene만 분석 대상으로 삼을 것이다.
+
+## Background information
+### Developmental Stages
+
+출처: Assignment 안내에 첨부된 pdf file
+
++ Stage Age Developmental Period
++ 1 4-7 pcw Embryonic
++ 2A 8-9 pcw Early prenatal
++ 2B 10-12 pcw Early prenatal
++ 3A 13-15 pcw Early mid-prenatal
++ 3B 16-18 pcw Early mid-prenatal
++ 4 19-24 pcw Late mid-prenatal
++ 5 25-38 pcw Late prenata
++ 6 Birth~5 months Early infancy
++ 7 6~18 months Late infancy
++ 8 19 months~5 yrs Early childhood
++ 9 6-11 yrs Late childhood
++ 10 12-19 years Adolescence
++ 11 20-660+ years Adulthood
+
+### Biotype 
+
+https://asia.ensembl.org/info/genome/genebuild/biotypes.html
+
++ IG gene: Immunoglobulin gene that undergoes somatic recombination.
++ Processed transcript: Gene/transcript that doesn't contain an open reading frame (ORF).
++ ncRNA: A non-coding gene.
++ Protein coding: Gene/transcipt that contains an open reading frame (ORF).
++ Pseudogene: A gene that has homology to known protein-coding genes but contain a frameshift and/or stop codon(s) which disrupts the ORF.
++ Readthrough: A readthrough transcript has exons that overlap exons from transcripts belonging to two or more different loci (in addition to the locus to which the readthrough transcript itself belongs).
++ TEC (To be Experimentally Confirmed): Regions with EST clusters that have polyA features that could indicate the presence of protein coding genes. 
++ TR gene: T cell receptor gene that undergoes somatic recombination.
+
+### Brainspan dataset
+출처: pdf file
++ Two data modalities included are RNA sequencing and exon microarray hybridization.
++ One whole or both hemispheres were collected. Samples with malformations or exposure to drug or alcohol abuse were excluded.
++ Prenatal age was extrapolated based upon the date of the mother's last menstruation, characteristics of the fetus noted upon ultrasonographic scanning, and foot length of the fetus.
++ Genotyping was done using Illumina Omni-2.5 million SNP arrays. Bead mill homogenizer was used to lyse the pulverized tissue. Quaint-IT RiboGreen RNA Assay Kit was used to quantitate purified mRNA with the NanoDrop 3300. Utilized Gencode version 3c and Gencode v10 for processing the RNA sequencing data. Alignment of the reads was performed by Tophat. Expression level of genes, exons, and spike-in RNAs were measured in the commonly used units of RPKM. SAMtools and RSEQtools software packages were used.
+
+## 데이터 확인
+
+```{bash}
+wget https://www.dropbox.com/s/u3ii9x4wpnzazm5/data_brainspan_DFC.20190928.Rdata
+```
+
+```{r}
+load('data_brainspan_DFC.20190928.Rdata')
+library(tidyverse)
+library(ggthemes)
+library(cowplot)
+```
+
+분석에 사용할 데이터와 package tidyverse, ggthemes, cowplot을 불러온다.
+
+```{r}
+head(g)
+table(g$gene_type)
+```
+
+data 'g'는 ensembl_gene_id, row_num, gene_symbol, gene_type의 4 column으로 구성되어 있다.
+gene_type의 경우 위의 'table(g$gene_type)' 결과값에 나열된 종류가 존재한다.
+
+```{r}
+head(e)
+```
+
+data 'e'는 X1~X35까지의 column으로 구성되어 있다. data 'g'에서 row_num에 해당하는 gene의 expression level 정보를 담고 있다.
+
+```{r}
+head(s)
+```
+
+data 's'는 column_num, donor_id, donor_name, age, gender, structure_id, structure_acronym, structure name 8개의 column으로 이루어져 있다. 각각의 donor은 data 'g'에서 차례로 X1~X35 정보를 제공한다.
+
+## 데이터 분석
+### 1. KCN 추출
+
+1) Gene group: Potassium Channels(KCN), https://www.genenames.org/data/genegroup/#!/group/183
+2) https://www.ncbi.nlm.nih.gov/gene
+을 참고해 KCN gene에 대한 정보를 얻었다.
+
+KCN subgroup에는
+
++ Potassium calcium-activated channels[KCNMA1, KCNN1~KCNN4, KCNU1] 
++ Potassium inwardly rectifying channel subfamily J (KCNJ) [KCNJ1~KCNJ18]
++ Potassium sodium-activated channel subfamily T (KCNT) [KCNT1, KCNT2]
++ Potassium two pore domain channel subfamily k (KCNK) [KCNK1~KCNK18]
++ Potassium voltage-gated channels[KCNA1~KCNA7, KCNA10, KCNB1, KCNB2, KCNC1~KCNC4, KCND1~KCND3, KCNF1, KCNG1~KCNG4, KCNH1~KCNH8, KCNQ1~KCNQ5, KCNS1~KCNS3, KCNV1, KCNV2]
+
+이 있다.
+이 중 voltage-gated channel에 대해서만 분석하고자 한다.
+
+```{r}
+KCNp_c <- g %>% filter(gene_symbol %in% c("KCNA1","KCNA2","KCNA3","KCNA4","KCNA5","KCNA6","KCNA7", "KCNA10", "KCNB1", "KCNB2", "KCNC1", "KCNC2", "KCNC3","KCNC4", "KCND1", "KCND2", "KCND3", "KCNF1", "KCNG1", "KCNG2", "KCNG3", "KCNG4", "KCNH1", "KCNH2", "KCNH3", "KCNH4", "KCNH5","KCNH6","KCNH7","KCNH8", "KCNQ1", "KCNQ2", "KCNQ3", "KCNQ4", "KCNQ5", "KCNS1", "KCNS2", "KCNS3", "KCNV1", "KCNV2"))
+
+KCNp_c
+```
+
+위와 같이 voltage-gated potassium channel gene에 해당하는 행들만 추출했다.
+
+```{r}
+e_KCN_p_c <- e[KCNp_c$row_num,]
+mean(e_KCN_p_c$X1)
+sd(e_KCN_p_c$X1)
+```
+
+mean과 sd값을 고려했을 때 average를 사용하는 것보다 median을 사용해 비교하는 것이 좋을 것이라고 판단했다.
+expression level 값이 차이가 너무 크게 나는 경우가 존재하기 때문이다.
+따라서 아래와 같이 각 column의 median, 즉 KCN genes expression level의 median을 계산했다.
+
+```{r}
+stage <- c("2A", "2A", "2B", "2B", "2B", "3A", "3A", "3A", "3B", "3B", "3B", "3B", "4", "4", "4", "5", "5", "6", "6", "7", "7", "8", "8", "8", "9", "9", "9", "10", "10", "10", "11", "11", "11", "11", "11")
+KCN_median <- apply(e_KCN_p_c, 2, median)
+s <- cbind(s, stage, KCN_median)
+```
+
+s에 각 사람들의 developmental stage와 KCN 유전자들의 expression level median 값을 열로 추가했다.
+
+### 2. SCN 추출
+
+1) https://www.genenames.org/data/genegroup/#!/group/179
+2) https://www.ncbi.nlm.nih.gov/gene을 참고해 sodium channel에 대한 정보를 얻었다.
+
+Sodium Channel에는
++ Acid sensing ion channel subunits (ASIC)
++ Sodium channels epithelial (SCNN)
++ Sodium leak channels, non selective (NALCN)
++ Sodium voltage-gated channels (SCN)
+총 4개의 subunit이 있다.
+이중 Sodium voltage-gated channels인 SCN에 대해서만 다루고자 한다.
+
+SCN은 다시 alpha subunits gene과 beta subunits gene 으로 나뉜다.
+alpha subunits gene에는 SCN1A~SCN5A, SCN7A, SCN8A~SCN11A가 있다. 
+beta subunits gene에는 SCN1B~SCN4B가 있다.
+
+```{r}
+SCNnum <- c(grep("^SCN.A", g$gene_symbol), grep("^SCN1.A", g$gene_symbol), grep("^SCN.B", g$gene_symbol))
+g[SCNnum,]
+```
+
+SCN gene에 해당하는 gene_symbol을 가진 행을 추출했다.
+
+```{r}
+e_SCN_p_c <- e[SCNnum,] 
+mean(e_SCN_p_c$X4)
+sd(e_SCN_p_c$X4)
+```
+
+SCN의 경우도 마찬가지로 median을 비교하는 것이 더 적절할 것이라고 판단했다.
+
+```{r}
+SCN_median <- apply(e_SCN_p_c, 2, median)
+s <- cbind(s, SCN_median)
+```
+
+각 사람에 대해 SCN genes expression level의 median을 구했고, s에 SCN_median 값을 열로 추가했다.
+
+## 3. CACN
+
+1) https://www.genenames.org/data/genegroup/#!/group/182
+2) https://www.ncbi.nlm.nih.gov/gene을 참고해 sodium channel에 대한 정보를 얻었다.
+
+Calcium channel에는 
++ Calcium voltage-gated channel subunits (CACN)
++ Cation channels sperm associated (CATSPER)
++ Inositol 1,4,5-triphosphate receptors (ITPR)
++ Ryanodine receptors (RYR)
++ Two pore segment channels (TPCN)
+의 subgroup을 가진다.
+이 중 voltage-gated channel gene인 CACN만 확인하고자 한다.
+
+CACN은 다시
++ Calcium channel auxiliary gamma subunits (CACNG)[CACNG1~CACNG8]
++ Calcium voltage-gated channel alpha1 subunits (CACNA1)[CACNA1A~CACNA1I, CACNA1S]
++ Calcium voltage-gated channel auxiliary alpha2delta subunits (CACNA2D)[CACNA2D1~CACNA2D4]
++ Calcium voltage-gated channel auxiliary beta subunits (CACNB)[CACNB1~CACNB4]
+의 subgroup을 가진다.
+
+```{r}
+g<- filter(g, g$gene_type=="protein_coding")
+CACNnum <- c(grep("^CACNG", g$gene_symbol), grep("^CACNA1", g$gene_symbol), grep("^CACNA2D", g$gene_symbol), grep("^CACNB", g$gene_symbol))
+g[CACNnum,]
+```
+
+먼저 protein coding gene에 해당되는 행만 g에서 filter하고, CACN gene을 gene_symbol로 가지는 행을 추출했다.
+
+```{r}
+e_CACN_p_c <- e[CACNnum,]
+CACN_median <- apply(e_CACN_p_c, 2, median)
+s <- cbind(s, CACN_median)
+```
+
+마찬가지로 각 stage에서의 expression median값을 비교하기로 했다. 각 사람에 대해 CACN genes expression level의 median을 구하고, s에 CACN_median을 열로 추가했다.
+
+### 4. plot 그리기
+
+최종적으로 완성된 data 's'는 다음과 같이 원래의 data s에 stage, KCN_median, SCN_median, CACN_median 값이 열로 추가되었다.
+
+```{r}
+head(s)
+```
+
+s가 잘 변환된 것을 확인했으므로 각 gene별로 developmental stage에 따른 expression level의 차이를 확인하려고 한다. 
+
+```{r}
+KCN <- ggplot(s, aes(x=stage)) + geom_jitter(aes(y=KCN_median), size=1, width=0.1, alpha=0.4) + scale_x_discrete(limit=c("2A", "2B","3A", "3B", "4", "5", "6", "7", "8", "9", "10", "11")) + stat_summary(aes(y = KCN_median, group=1), fun.y=mean, color="red", geom="line") + geom_text(family="serif", size=3.7, x=11.5, y=3.8, label="Median Average \n per stage") + theme_light() + ggtitle("Median Expression level of KCN genes in BrainSpan Dataset") + labs(x="Developmental Stage", y="Median Expression level") + theme(plot.title = element_text(family = "serif", face = "bold", hjust = 0.5, size = 10, color = "darkblue"), axis.title = element_text(family="serif", size = 9, color = "black"))
+
+SCN <- ggplot(s, aes(x=stage)) + geom_jitter(aes(y=SCN_median), size=1, width=0.1, alpha=0.4) + scale_x_discrete(limit=c("2A", "2B","3A", "3B", "4", "5", "6", "7", "8", "9", "10", "11")) + stat_summary(aes(y = SCN_median, group=1), fun.y=mean, color="blue", geom="line") + geom_text(family="serif", size=3.7, x=10.6, y=7.8, label="Median Average \n per stage") + theme_light() + ggtitle("Median Expression level of SCN genes in BrainSpan Dataset")  +  labs(x="Developmental Stage", y="Median Expression level")+theme(plot.title = element_text(family = "serif", face = "bold", hjust = 0.5, size = 10, color = "darkblue"), axis.title = element_text(family="serif", size = 9, color = "black"))
+
+CACN <- ggplot(s, aes(x=stage)) + geom_jitter(aes(y=CACN_median), size=1, width=0.1,  alpha=0.4) + scale_x_discrete(limit=c("2A", "2B","3A", "3B", "4", "5", "6", "7", "8", "9", "10", "11")) + stat_summary(aes(y = CACN_median, group=1), fun.y=mean, color="darkgreen", geom="line") + geom_text(family="serif", size=3.7, x=2.4, y=4.8, label="Median Average \n per stage") + theme_light()+ ggtitle("Median Expression level of CACN genes in BrainSpan Dataset") + labs(x="Developmental Stage", y="Median Expression level") + theme(plot.title = element_text(family = "serif", face = "bold", hjust = 0.5, size = 10, color = "darkblue"), axis.title = element_text(family="serif", size = 9, color = "black"))
+```
+
+각 stage에 해당하는 사람의 KCN genes, SCN genes, CACN genes에 대한 expression level median을 point로 나타냈다. jitter를 이용해 점이 최대한 겹치지 않게 했다.다음으로 각 stage에 해당하는 사람의 median 평균을 선으로 이어 나타냈다. KCN genes에 대한 선 그래프를 빨간색, SCN genes에 대한 선 그래프를 파란색, CACN genes에 대한 그래프를 선 초록색으로 나타냈다. 또한 3종류의 그래프 모두에 대해 선 그래프가 나타내는 것이 Median Average per stage임을 geom_text를 이용해 나타냈다. 이후 ggtitle, labs를 이용해 title을 달고 theme을 이용해 그래프를 더 보기 좋게 했다.
+cowplot을 사용하기 위해 KCN, SCN, CACN을 지정했다.
+
+```{r, fig.width=9,fig.height=10}
+plot<- plot_grid(KCN, SCN, CACN, ncol=1)
+plot
+```
+
+plot_grid를 이용해 세 그래프를 묶었다.
+
+KCN genes의 경우, stage 2A에서 stage 7까지 꾸준히 expression level이 증가함을 확인할 수 있다. Stage 8, 즉 Early childhood에 expression level이 감소했다. 이후 stage 9, 10에서 다시 증가하다가 stage 11, Adulthood에 감소했다. Stage 2A에 비해 11일 때의 expression level이 더 크다. 각 stage마다 찍힌 점들을 통해 같은 stage일 때 사람들의 gene expression level median 값이 비슷한지 차이가 있는지 확인할 수 있다. Stage 2B의 경우 점들이 몰려있는 데에 비해 Stage 7의 경우 점들이 흩어진 정도가 비교적 크다.
+
+SCN genes의 경우, stage 2A에서 stage 7까지 꾸준히 expression level이 증가한다. Stage 8, 즉 Early Childhood에 expression level이 감소했으며 이후 stage 9, 10, 11에서 다시 증가한다. Stage 2A에 비해 11일 때의 expression level이 더 크다. KCN genes의 경우와 마찬가지로 각 stage마다 찍힌 점들을 통해 median 분포를 볼 수 있다. Stage 11에서 양 극단의 점들이 가장 멀리 떨어져있고 2B, 3A에서 점들이 비교적 몰려 있는 것을 확인할 수 있다.
+
+KCN genes와 SCN genes의 경우 Expression rate가 developmental stage가 증가할수록 대체로 증가하는 경향성을 띤다. 반면CACN의 경우 developmental stage가 높아질수록 Expression rate가 대체로 감소한다. 2A에서 2B로 넘어갈 때 줄어들고, 3B까지 증가하며, 5까지 감소하다가 6에서 다시 증가, 8까지 감소, 9부터 11까지 증가한다. Stage 2A에 비해 11일 때의 expression level이 더 작다. 마찬가지로 점들의 분포를 통해    
+
+
+추가로 각 단계에서 3 종류 유전자의 expression level 경향성을 비교해보았다.
+차이를 조금 더 잘 비교할 수 있도록 y axis에 scale_y_log10을 적용했고, 위와 같은 방식으로 geom)jitter, stat_summary를 이용해 median과 median들의 평균을 나타냈다. 이후 theme_light, ggtitle, labs, themes 함수를 이용해 그래프의 aesthetics를 다뤘다.
+
+```{r}
+ggplot(s, aes(x=stage)) + scale_y_log10() + geom_jitter(aes(y=KCN_median), size=1, width=0.1, alpha=0.4, color="red") + geom_jitter(aes(y=SCN_median), size=1, width=0.1, alpha=0.4, color="blue") + geom_jitter(aes(y=CACN_median), size=1, width=0.1,  alpha=0.4, color="darkgreen") + scale_x_discrete(limit=c("2A", "2B","3A", "3B", "4", "5", "6", "7", "8", "9", "10", "11")) + stat_summary(aes(y = KCN_median, group=1, color="KCN"), fun.y=mean, geom="line")+ stat_summary(aes(y = SCN_median, group=1, color="SCN"), fun.y=mean, geom="line") + stat_summary(aes(y = CACN_median, group=1, color="CACN"), fun.y=mean, geom="line") + scale_colour_manual(values=c("KCN"="red", "SCN"="blue", "CACN"="darkgreen"))+ theme_light() + ggtitle("Median Expression level of ion channel genes in BrainSpan Dataset") + labs(colour="", x="Developmental Stage", y="Median Expression level(log scale)") + theme(plot.title = element_text(family = "serif", face = "bold", hjust = 0.5, size = 15, color = "darkblue"), axis.title = element_text(family="serif", size = 9, color = "black"))
+```
+
+점들과 선을 모두 고려해서 봤을 때, Stage 2A부터 5까지는 CACN gene들의 expression level이 가장 높음을 확인할 수 있다. Stage 3B까지 대체로 그 다음으로 KCN gene들의 expression level이 가장 높았다. Stage 9부터 11번까지는 SCN gene들의 expression level이 대체로 가장 높음을 확인할 수 있다. Stage 8에서 CACN, KCN, SCN의 expression level이 모두 감소하는 경향성을 보임을 확인할 수 있다. 
