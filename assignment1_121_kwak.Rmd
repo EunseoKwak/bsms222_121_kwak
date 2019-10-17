@@ -246,18 +246,17 @@ plot
 
 plot_grid를 이용해 세 그래프를 묶었다.
 
-KCN genes의 경우, stage 2A에서 stage 7까지 꾸준히 expression level이 증가함을 확인할 수 있다. Stage 8, 즉 Early childhood에 expression level이 감소했다. 이후 stage 9, 10에서 다시 증가하다가 stage 11, Adulthood에 감소했다. Stage 2A에 비해 11일 때의 expression level이 더 크다. 각 stage마다 찍힌 점들을 통해 같은 stage일 때 사람들의 gene expression level median 값이 비슷한지 차이가 있는지 확인할 수 있다. Stage 2B의 경우 점들이 몰려있는 데에 비해 Stage 7의 경우 점들이 흩어진 정도가 비교적 크다.
+KCN genes의 경우, stage 2A에서 stage 7까지 꾸준히 expression level이 증가한다. Stage 8, 즉 Early childhood에 expression level이 감소했다. 이후 stage 9, stage 10에서 다시 증가하다가 stage 11인 Adulthood에 감소했다. Stage 2A에 비해 stage 11일 때의 gene expression level이 더 크다. 각 stage마다 찍힌 점들을 통해 같은 stage일 때 사람들의 gene expression level median 값이 비슷한지 차이가 있는지 확인할 수 있다. Stage 2B의 경우 점들이 몰려있는 데에 비해 Stage 7의 경우 점들이 흩어진 정도가 비교적 크다.
 
-SCN genes의 경우, stage 2A에서 stage 7까지 꾸준히 expression level이 증가한다. Stage 8, 즉 Early Childhood에 expression level이 감소했으며 이후 stage 9, 10, 11에서 다시 증가한다. Stage 2A에 비해 11일 때의 expression level이 더 크다. KCN genes의 경우와 마찬가지로 각 stage마다 찍힌 점들을 통해 median 분포를 볼 수 있다. Stage 11에서 양 극단의 점들이 가장 멀리 떨어져있고 2B, 3A에서 점들이 비교적 몰려 있는 것을 확인할 수 있다.
+SCN genes의 경우, stage 2A에서 stage 7까지 꾸준히 expression level이 증가한다. Stage 8, 즉 Early Childhood에 gene expression level이 감소했으며 이후 stage 9, stage 10, stage 11에서 다시 증가한다. Stage 2A에 비해 stage 11일 때의 expression level이 더 크다. KCN genes의 경우와 마찬가지로 각 stage마다 찍힌 점들을 통해 median 분포를 볼 수 있다. Stage 11에서 양 극단의 점들이 가장 멀리 떨어져있고 stage 2B, stage 3A에 점들이 비교적 몰려 있다.
 
-KCN genes와 SCN genes의 경우 Expression rate가 developmental stage가 증가할수록 대체로 증가하는 경향성을 띤다. 반면CACN의 경우 developmental stage가 높아질수록 Expression rate가 대체로 감소한다. 2A에서 2B로 넘어갈 때 줄어들고, 3B까지 증가하며, 5까지 감소하다가 6에서 다시 증가, 8까지 감소, 9부터 11까지 증가한다. Stage 2A에 비해 11일 때의 expression level이 더 작다. 마찬가지로 점들의 분포를 통해    
-
+KCN genes와 SCN genes의 경우 gene expression level이 developmental stage가 증가할수록 대체로 증가하는 경향성을 띤다. 반면 CACN의 경우 developmental stage가 높아질수록 Expression level이 대체로 감소한다. stage 2A에서 stage 2B로 넘어갈 때 줄어들고, stage 3B까지 증가하며, stage 5까지 감소하다가 stage 6에서 다시 증가, stage 8까지 감소, stage 9부터 stage 11까지 증가한다. Stage 2A에 비해 stage 11일 때의 expression level이 더 작다. 점들의 분포를 확인했을 때, stage 2A에서 점들이 비교적 몰려있는 데에 비해 stage 3A, stage 3B에서 점들이 서로 가장 떨어져 있다.   
 
 추가로 각 단계에서 3 종류 유전자의 expression level 경향성을 비교해보았다.
-차이를 조금 더 잘 비교할 수 있도록 y axis에 scale_y_log10을 적용했고, 위와 같은 방식으로 geom)jitter, stat_summary를 이용해 median과 median들의 평균을 나타냈다. 이후 theme_light, ggtitle, labs, themes 함수를 이용해 그래프의 aesthetics를 다뤘다.
+차이를 조금 더 잘 비교할 수 있도록 y axis에 scale_y_log10을 적용했고, 위와 같은 방식으로 geom_jitter, stat_summary를 사용해 점을 통해 median, 선을 통해 median들의 평균을 나타냈다. 이후 theme_light, ggtitle, labs, themes 함수를 이용해 그래프의 aesthetics를 다뤘다.
 
 ```{r}
 ggplot(s, aes(x=stage)) + scale_y_log10() + geom_jitter(aes(y=KCN_median), size=1, width=0.1, alpha=0.4, color="red") + geom_jitter(aes(y=SCN_median), size=1, width=0.1, alpha=0.4, color="blue") + geom_jitter(aes(y=CACN_median), size=1, width=0.1,  alpha=0.4, color="darkgreen") + scale_x_discrete(limit=c("2A", "2B","3A", "3B", "4", "5", "6", "7", "8", "9", "10", "11")) + stat_summary(aes(y = KCN_median, group=1, color="KCN"), fun.y=mean, geom="line")+ stat_summary(aes(y = SCN_median, group=1, color="SCN"), fun.y=mean, geom="line") + stat_summary(aes(y = CACN_median, group=1, color="CACN"), fun.y=mean, geom="line") + scale_colour_manual(values=c("KCN"="red", "SCN"="blue", "CACN"="darkgreen"))+ theme_light() + ggtitle("Median Expression level of ion channel genes in BrainSpan Dataset") + labs(colour="", x="Developmental Stage", y="Median Expression level(log scale)") + theme(plot.title = element_text(family = "serif", face = "bold", hjust = 0.5, size = 15, color = "darkblue"), axis.title = element_text(family="serif", size = 9, color = "black"))
 ```
 
-점들과 선을 모두 고려해서 봤을 때, Stage 2A부터 5까지는 CACN gene들의 expression level이 가장 높음을 확인할 수 있다. Stage 3B까지 대체로 그 다음으로 KCN gene들의 expression level이 가장 높았다. Stage 9부터 11번까지는 SCN gene들의 expression level이 대체로 가장 높음을 확인할 수 있다. Stage 8에서 CACN, KCN, SCN의 expression level이 모두 감소하는 경향성을 보임을 확인할 수 있다. 
+점들과 선을 모두 고려해서 봤을 때, Stage 2A부터 Stage 5까지는 CACN gene들의 expression level이 가장 높음을 확인할 수 있다. Stage 3B까지 대체로 CACN genes, KCN genes, SCN genes 순으로 expression level이 높았다. Stage 8에서 CACN, KCN, SCN의 expression level이 모두 감소하는 경향성을 보인다. Stage 8에서 9으로 넘어갈 때 expression level이 증가하는 경향성을 보인다. Stage 9부터 11번까지는 대체로 SCN genes, KCN genes, CACN genes 순으로 expression level이 높다.
