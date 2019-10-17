@@ -58,6 +58,7 @@ https://asia.ensembl.org/info/genome/genebuild/biotypes.html
 
 ### Brainspan dataset
 출처: pdf file
+
 + Two data modalities included are RNA sequencing and exon microarray hybridization.
 + One whole or both hemispheres were collected. Samples with malformations or exposure to drug or alcohol abuse were excluded.
 + Prenatal age was extrapolated based upon the date of the mother's last menstruation, characteristics of the fetus noted upon ultrasonographic scanning, and foot length of the fetus.
