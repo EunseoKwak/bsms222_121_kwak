@@ -1,0 +1,226 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## 13.10 Continuous Probability
+
+We have to give 1/n proportion (size:n) to each observed value when summarizing proportion of numeric values.
+-> When defining probability distributions, it is not useful to assign a very small probability to every single height
+
+It's much more practical to use 'intervals' rather than 'single values'.
+
+Standard way of doing this : Cumulative Distribution Function(CDF)
+
+```{r}
+library(tidyverse)
+library(dslabs)
+data(heights)
+x <- heights %>% filter(sex=="Male") %>% pull(height)
+```
+
+```{r}
+F <- function(a) mean(x<=a)
+# For any value a, proportion of values in the list x <= a
+```
+
+What is the chance that a randomly picked male is taller than 70.5 inches? = Proportion of students that are taller than 70.5 inches
+
+```{r}
+1 - F(70)
+```
+
+We can use CDF to compute the probability of any subset.
+
+```{r}
+# probability of a student being btwn height a and b
+F(b)-F(a)
+```
+
+## 13.11 Theoretical continuous distributions
+
+function 'pnorm' : culumative distribution for the normal distribution.
+
+```{r}
+F(a) = pnorm(a, m, s)
+# m = average, s = standard deviation
+```
+
+What is the probability that a randomly selected student is taller than 70.5 inches?
+
+```{r}
+m <- mean(x)
+s <- sd(x)
+1 - pnorm(70.5, m, s)
+```
+
+### 13.11.1 Theoretical distributions as apporximations
+
+Data is always, technically speaking, discrete. 
+The probability distribution is defined by the proportion of students reporting each height.
+But; in case of height; clearly it is much more useful for data analytic purposes to treat this outcome as a continuous numeric variable.
+
+In continuous distributions; probability of single value is not defined.
+The normal approximation is particularly useful if we deal with intervals that include exactly one round number.
+
+```{r}
+mean(x <= 68.5) - mean(x <= 67.5)
+mean(x <= 69.5) - mean(x <= 68.5)
+mean(x <= 70.5) - mean(x <= 69.5)
+```
+
+we can get close with normal approximation
+
+```{r}
+pnorm(68.5, m, s) - pnorm(67.5, m, s)
+pnorm(69.5, m, s) - pnorm(68.5, m, s)
+pnorm(70.5, m, s) - pnorm(69.5, m, s) 
+```
+
+Not as useful for other intervals
+
+```{r}
+mean(x <= 70.9) - mean(x<=70.1)
+pnorm(70.9, m, s) - pnorm(70.1, m, s)
+```
+
+This situation: _discretization_
+the reported heights tend to be more common at discrete values, in this case, due to rounding.
+
+### 13.11.2 The proability density
+
+For categorical distribution; we can define probability of a category.
+CDF can easily be defined ; simply adding up probabilities of each category.
+
+For continuous distribution;
+F(a)=Pr(X<=a)= integral -무한대에서 a까지 f(x)dx
+
+For height example,
+
+```{r}
+1-pnorm(76, m, s)
+```
+
+https://rafalab.github.io/dsbook/book_files/figure-html/intergrals-1.png
+
+We get this using function 'dnorm'
+
+## 13.12 Monte Carlo simulations for continuous variables
+
+function 'rnorm' takes three arguments: size, average(defaults to 0), standard deviation(defaults to 1) and produced random numbers.
+
+```{r}
+n <- length(x)
+m <- mean(x)
+s <- sd(x)
+simulated_heights <- rnorm(n, m, s)
+```
+
+-> the distribution looks normal.
+This function permit us to generate data that mimics natural events and answers questions related to what could happen by chance by running Monte Carlo simulations.
+
+```{r}
+# distribution of tallest person
+B <- 10000
+tallest <- replicate(B, {
+  simulated_data <- rnorm(800, m, s)
+  max(simulated_data)
+})
+```
+
+```{r}
+mean(tallest >= 7*12)
+```
+
+the distribution does not look normal
+
+## 13.13 Continuous distributions
+
+After looking at normal distribution, we should know there are other continuous distributions that we may encounter - student-t, Chi-square, exponential, gamma, beta, and beta-binomial.
+
+R provides functions to compute the density, the quantiles, the cumulative distribution functions and to generate Monte Carlo simulations. R uses a convention that lets us remember the names, namely using the letters d, q, p, and r in front of a shorthand for the distribution.
+
+The functions qnorm gives us the quantiles.
+```{r}
+x <- seq(-4, 4, length.out = 100)
+qplot(x, f, geom = "line", data = data.frame(x, f = dnorm(x)))
+```
+
+For the student-t, described later in Section 16.10, the shorthand t is used so the functions are dt for the density, qt for the quantiles, pt for the cumulative distribution function, and rt for Monte Carlo simulation.
+
+### 13.14 Exercises
+
+1. Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is 5 feet or shorter?
+
+```{r}
+
+```
+
+
+2. Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is 6 feet or taller?
+
+```{r}
+m <- 64
+s <- 3
+1- pnorm(12*5, m, s)
+```
+
+3. Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is between 61 and 67 inches?
+
+```{r}
+pnorm(67, m, s)-pnorm(61, m, s)
+```
+
+4. Repeat the exercise above, but convert everything to centimeters. That is, multiply every height, including the standard deviation, by 2.54. What is the answer now?
+
+```{r}
+m <- 2.54*64
+s <- 2.54*3
+pnorm(67*2.54, m, s) - pnorm(61*2.54, m, s)
+```
+
+5. Notice that the answer to the question does not change when you change units. This makes sense since the answer to the question should not be affected by what units we use. In fact, if you look closely, you notice that 61 and 64 are both 1 SD away from the average. Compute the probability that a randomly picked, normally distributed random variable is within 1 SD from the average.
+
+```{r}
+pnorm(m+s, m, s) - pnorm(m-s, m, s)
+```
+
+6. To see the math that explains why the answers to questions 3, 4, and 5 are the same, suppose we have a random variable with average m and standard error s. Suppose we ask the probability of X being smaller or equal to a. Remember that, by definition, a is (a-m)/s standard deiations s away from the average m. the probability is:
+
+Pr(X≤a)
+
+Now we subtract mu to both ides and then divide both sides by sigma;
+
+Pr((X-m)/s≤(a-m)/s)
+
+The quantity on the left is a standard normal random variable. It has an average of 0 and a standard error of 1. We will call it Z:
+
+Pr(Z≤(a-m)/s)
+
+So, no matter the units, the probability of  
+X≤a is the same as the probability of a standard normal variable being less than (a−m)/s. If mu is the average and sigma the standard error, which of the following R code would give us the right answer in every situation:
+
+A. mean(X<=a)
+__B. pnorm((a - m)/s)__
+C. pnorm((a - m)/s, m, s)
+D. pnorm(a)
+
+7. Imagine the distribution of male adults is approximately normal with an expected value of 69 and a standard deviation of 3. How tall is the male in the 99th percentile? Hint: use qnorm.
+
+```{r}
+qnorm(0.99, mean=69, sd=3)
+```
+
+8. The distribution of IQ scores is approximately normally distributed. The average is 100 and the standard deviation is 15. Suppose you want to know the distribution of the highest IQ across all graduating classes if 10,000 people are born each in your school district. Run a Monte Carlo simulation with B=1000 generating 10,000 IQ scores and keeping the highest. Make a histogram.
+
+```{r}
+B <- 1000
+m <- 100
+s <- 15
+highest <- replicate(B, {
+  IQ<- rnorm(10000, m, s)
+  max(IQ)})
+highest <- as.data.frame(highest)
+ggplot()+geom_histogram(aes(highest$highest)) +labs(x="Highest IQ score")
+```
+
