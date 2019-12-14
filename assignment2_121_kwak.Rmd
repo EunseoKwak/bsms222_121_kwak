@@ -1,0 +1,174 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Assignment 2
+## 탐구 주제
+
+BrainSpan dataset을 이용해서 __gene expression changes of voltaged-gated ion channel genes over development.__ 을 분석하고자 한다.
+Developmental stage에 따라 gene expression level이 어떻게 달라지는지 확인하는 것이다.
+크게 KCN(K+ 채널 gene), SCN(Na+ 채널 gene), CACN(Ca+ 채널 gene)의 gene expression을 다룰 것이며, 비교를 위해 protein_coding gene만 분석 대상으로 삼을 것이다.
+
+## 데이터 불러오기
+
+```{r}
+load('data_brainspan_DFC.20190928.Rdata')
+library(tidyverse)
+library(ggthemes)
+library(cowplot)
+```
+
+분석에 사용할 데이터와 package tidyverse, ggthemes, cowplot을 불러온다.
+
+## 데이터 분석
+### 1. KCN 추출
+
+1) Gene group: Potassium Channels(KCN), https://www.genenames.org/data/genegroup/#!/group/183
+2) https://www.ncbi.nlm.nih.gov/gene
+을 참고해 KCN gene에 대한 정보를 얻었다.
+
+KCN subgroup에는
+
++ Potassium calcium-activated channels[KCNMA1, KCNN1~KCNN4, KCNU1] 
++ Potassium inwardly rectifying channel subfamily J (KCNJ) [KCNJ1~KCNJ18]
++ Potassium sodium-activated channel subfamily T (KCNT) [KCNT1, KCNT2]
++ Potassium two pore domain channel subfamily k (KCNK) [KCNK1~KCNK18]
++ Potassium voltage-gated channels[KCNA1~KCNA7, KCNA10, KCNB1, KCNB2, KCNC1~KCNC4, KCND1~KCND3, KCNF1, KCNG1~KCNG4, KCNH1~KCNH8, KCNQ1~KCNQ5, KCNS1~KCNS3, KCNV1, KCNV2]
+
+이 있다.
+이 중 voltage-gated channel에 대해서만 분석하고자 한다.
+
+```{r}
+KCNp_c <- g %>% filter(gene_symbol %in% c("KCNA1","KCNA2","KCNA3","KCNA4","KCNA5","KCNA6","KCNA7", "KCNA10", "KCNB1", "KCNB2", "KCNC1", "KCNC2", "KCNC3","KCNC4", "KCND1", "KCND2", "KCND3", "KCNF1", "KCNG1", "KCNG2", "KCNG3", "KCNG4", "KCNH1", "KCNH2", "KCNH3", "KCNH4", "KCNH5","KCNH6","KCNH7","KCNH8", "KCNQ1", "KCNQ2", "KCNQ3", "KCNQ4", "KCNQ5", "KCNS1", "KCNS2", "KCNS3", "KCNV1", "KCNV2"))
+```
+
+위와 같이 voltage-gated potassium channel gene에 해당하는 행들만 추출했다.
+
+```{r}
+e_KCN_p_c <- e[KCNp_c$row_num,]
+mean(e_KCN_p_c$X1)
+sd(e_KCN_p_c$X1)
+```
+
+mean과 sd값을 고려했을 때 average를 사용하는 것보다 median을 사용해 비교하는 것이 좋을 것이라고 판단했다.
+expression level 값이 차이가 너무 크게 나는 경우가 존재하기 때문이다.
+따라서 아래와 같이 각 column의 median, 즉 KCN genes expression level의 median을 계산했다.
+
+```{r}
+stage <- c("2A", "2A", "2B", "2B", "2B", "3A", "3A", "3A", "3B", "3B", "3B", "3B", "4", "4", "4", "5", "5", "6", "6", "7", "7", "8", "8", "8", "9", "9", "9", "10", "10", "10", "11", "11", "11", "11", "11")
+KCN_median <- apply(e_KCN_p_c, 2, median)
+s <- cbind(s, stage, KCN_median)
+```
+
+s에 각 사람들의 developmental stage와 KCN 유전자들의 expression level median 값을 열로 추가했다.
+
+### 2. SCN 추출
+
+1) https://www.genenames.org/data/genegroup/#!/group/179
+2) https://www.ncbi.nlm.nih.gov/gene을 참고해 sodium channel에 대한 정보를 얻었다.
+
+Sodium Channel에는
++ Acid sensing ion channel subunits (ASIC)
++ Sodium channels epithelial (SCNN)
++ Sodium leak channels, non selective (NALCN)
++ Sodium voltage-gated channels (SCN)
+총 4개의 subunit이 있다.
+이중 Sodium voltage-gated channels인 SCN에 대해서만 다루고자 한다.
+
+SCN은 다시 alpha subunits gene과 beta subunits gene 으로 나뉜다.
+alpha subunits gene에는 SCN1A~SCN5A, SCN7A, SCN8A~SCN11A가 있다. 
+beta subunits gene에는 SCN1B~SCN4B가 있다.
+
+```{r}
+SCNnum <- c(grep("^SCN.A", g$gene_symbol), grep("^SCN1.A", g$gene_symbol), grep("^SCN.B", g$gene_symbol))
+```
+
+SCN gene에 해당하는 gene_symbol을 가진 행을 추출했다.
+
+```{r}
+e_SCN_p_c <- e[SCNnum,] 
+mean(e_SCN_p_c$X4)
+sd(e_SCN_p_c$X4)
+```
+
+SCN의 경우도 마찬가지로 median을 비교하는 것이 더 적절할 것이라고 판단했다.
+
+```{r}
+SCN_median <- apply(e_SCN_p_c, 2, median)
+s <- cbind(s, SCN_median)
+```
+
+각 사람에 대해 SCN genes expression level의 median을 구했고, s에 SCN_median 값을 열로 추가했다.
+
+### 3. CACN 추출
+
+1) https://www.genenames.org/data/genegroup/#!/group/182
+2) https://www.ncbi.nlm.nih.gov/gene을 참고해 sodium channel에 대한 정보를 얻었다.
+
+Calcium channel에는 
++ Calcium voltage-gated channel subunits (CACN)
++ Cation channels sperm associated (CATSPER)
++ Inositol 1,4,5-triphosphate receptors (ITPR)
++ Ryanodine receptors (RYR)
++ Two pore segment channels (TPCN)
+의 subgroup을 가진다.
+이 중 voltage-gated channel gene인 CACN만 확인하고자 한다.
+
+CACN은 다시
++ Calcium channel auxiliary gamma subunits (CACNG)[CACNG1~CACNG8]
++ Calcium voltage-gated channel alpha1 subunits (CACNA1)[CACNA1A~CACNA1I, CACNA1S]
++ Calcium voltage-gated channel auxiliary alpha2delta subunits (CACNA2D)[CACNA2D1~CACNA2D4]
++ Calcium voltage-gated channel auxiliary beta subunits (CACNB)[CACNB1~CACNB4]
+의 subgroup을 가진다.
+
+```{r}
+g<- filter(g, g$gene_type=="protein_coding")
+CACNnum <- c(grep("^CACNG", g$gene_symbol), grep("^CACNA1", g$gene_symbol), grep("^CACNA2D", g$gene_symbol), grep("^CACNB", g$gene_symbol))
+```
+
+먼저 protein coding gene에 해당되는 행만 g에서 filter하고, CACN gene을 gene_symbol로 가지는 행을 추출했다.
+
+```{r}
+e_CACN_p_c <- e[CACNnum,]
+CACN_median <- apply(e_CACN_p_c, 2, median)
+s <- cbind(s, CACN_median)
+```
+
+마찬가지로 각 stage에서의 expression median값을 비교하기로 했다. 각 사람에 대해 CACN genes expression level의 median을 구하고, s에 CACN_median을 열로 추가했다.
+
+### 4. plot 수정하기
+
+각 단계에서 3 종류 유전자의 expression level 경향성을 비교했던 그래프에 대한 비평을 받았으므로, 이 그래프를 이용하고자 한다.
+
+코멘트 내용은 다음과 같았다.
+
+Comment 1: 시간이 지남에 따라 변화되는 양상을 보여주는 plot이기 때문에 line을 쓴 것은 적절해 보인다. 또한 __line의 범위를 벗어나는 data를 point로 표시하여__ 좀 더 정확한 양상을 확인할 수 있었다. 원 데이터에는 log scale이 아닌 것을 log scale로 표현하여 변화값을 더 명백히 드러낼 수 있었다. 
+
+Comment 2: Line 주변에 찍혀있는 point들이 각각의 데이터를 의미한다는 것은 알겠으나,
+데이터의 개수가 많지 않아서 뚜렷한 line을 표현하지는 못하므로 없어도 크게 정보를 해석하는데 문제가 없을 것 같다. __point를 없애면 더 깔끔한 plot이 되지 않을까 생각한다. __
+
+Comment 3: Expression level 은 조절인자들에 의해서 그 값이 몇만배씩 차이가 나서, 그래프상 표현하기 어려운데, Median 값을 그냥 사용한 것이 아니라 수치의 높낮이를 파악하기 위해서 log scale 을 쓰고 Y 축에 명시한 점이 돋보인다. 또한 Developmental stage 에 따라서 expression level 의 dot 을 표시하고 이에 따른 선형그래프를 통해 Expression 정도를 한눈에 쉽게 파악할 수 있게 Visualization 하였다. Ion channel 에 관련된 유전자들을 구분이 쉬운 색으로 구별한 점도 눈에 띈다. 개선할 점으로는 Development stage8 부분처럼 위에서 언급한 __객관적으로 봐도 경향성에서 벗어난 부분들에 연한 색깔의 박스로 따로 표시했으면 좀 더 특이한 부분을 파악하기 쉽지 않았나 생각이 든다.__ 또 한가지로 다소 경향성에서 벗어난 Dot 들이 좀 보이는데 __일부 너무 벗어난 dot 을 제외시키는 것이 좋아보인다.__
+
+Comment 4: The median expression levels are presented in log scale which makes the numbers look more precise than it was before. The added tendency line helps the readers understand the median tendency of the dataset compared to when the plot only had dots.
+
+기존 그래프는 차이를 조금 더 잘 비교할 수 있도록 y axis에 scale_y_log10을 적용했고, 위와 같은 방식으로 geom_jitter, stat_summary를 사용해 점을 통해 median, 선을 통해 median들의 평균을 나타냈다. stat_summary를 이용해 legend를 표시했고, theme_light, ggtitle, labs, themes 함수를 이용해 그래프의 aesthetics를 다뤘다.
+
+```{r}
+ggplot(s, aes(x=stage)) + scale_y_log10() + geom_jitter(aes(y=KCN_median), size=1, width=0.1, alpha=0.4, color="red") + geom_jitter(aes(y=SCN_median), size=1, width=0.1, alpha=0.4, color="blue") + geom_jitter(aes(y=CACN_median), size=1, width=0.1,  alpha=0.4, color="darkgreen") + scale_x_discrete(limit=c("2A", "2B","3A", "3B", "4", "5", "6", "7", "8", "9", "10", "11")) + stat_summary(aes(y = KCN_median, group=1, color="KCN"), fun.y=mean, geom="line")+ stat_summary(aes(y = SCN_median, group=1, color="SCN"), fun.y=mean, geom="line") + stat_summary(aes(y = CACN_median, group=1, color="CACN"), fun.y=mean, geom="line") + scale_colour_manual(values=c("KCN"="red", "SCN"="blue", "CACN"="darkgreen"))+ theme_light() + ggtitle("Median Expression level of ion channel genes in BrainSpan Dataset") + labs(colour="", x="Developmental Stage", y="Median Expression level(log scale)") + theme(plot.title = element_text(family = "serif", face = "bold", hjust = 0.5, size = 15, color = "darkblue"), axis.title = element_text(family="serif", size = 9, color = "black"))
+```
+
+먼저 line을 벗어나는 sample을 dot으로 표현했다는 비평이 있어 dot이 각 sample이고 line이 tendency line임을 적어야 하는가에 대한 고민을 했다. 그런데 다른 비평들은 잘 해석한 것 같았고, 보통 그 설명은 caption부분에 달려 있는 것이므로 graph에까지 표시할 필요는 없다고 느꼈다. 따라서 별도의 설명을 달지 않기로 했다.
+
+비평에서 언급한 개선점들에 대해 짚어보자면
+1. dot 표시를 없애면 좋을 것 같다.
+2. Stage 8과 같이 경향성에 벗어난 부분은 연한 색깔의 박스로 별도의 표시를 해주면 좋을 것 같다.
+3. 경향성에 벗어난 dot은 제외해주면 좋을 것 같다.
+
+1의 경우, 나는 그래프에 각 sample의 정보가 드러나야한다고 생각했기 때문에 dot 표시를 했었다. 따라서 dot을 없애야겠다는 생각이 들지 않아 수정하지 않기로 했다. 3의 경우, 마찬가지로 그래프에 sample 정보가 드러나야 하고 내가 임의적으로 sample을 제외하면 안된다고 생각하기 때문에 수정하지 않기로 했다.
+
+2에서 지적한 연한 색깔의 박스를 그래프에 표시하기로 했다. annotate를 이용해 박스를 나타냈고, KCN, SCN, CACN 각 dot들의 색에 영향을 주지 않기 위해 회색으로 칠했다.
+
+```{r}
+ggplot(s, aes(x=stage)) + scale_y_log10() + annotate("rect", xmin = 9-0.3, xmax = 9.3, ymin = 0.5, ymax = 3, fill = "grey", color = "grey", alpha=0.3) + geom_jitter(aes(y=KCN_median), size=1, width=0.1, alpha=0.4, color="red") + geom_jitter(aes(y=SCN_median), size=1, width=0.1, alpha=0.4, color="blue") + geom_jitter(aes(y=CACN_median), size=1, width=0.1,  alpha=0.4, color="darkgreen") + scale_x_discrete(limit=c("2A", "2B","3A", "3B", "4", "5", "6", "7", "8", "9", "10", "11")) + stat_summary(aes(y = KCN_median, group=1, color="KCN"), fun.y=mean, geom="line")+ stat_summary(aes(y = SCN_median, group=1, color="SCN"), fun.y=mean, geom="line") + stat_summary(aes(y = CACN_median, group=1, color="CACN"), fun.y=mean, geom="line") + scale_colour_manual(values=c("KCN"="red", "SCN"="blue", "CACN"="darkgreen"))+ theme_light() + ggtitle("Median Expression level of ion channel genes in BrainSpan Dataset") + labs(colour="", x="Developmental Stage", y="Median Expression level(log scale)") + theme(plot.title = element_text(family = "serif", face = "bold", hjust = 0.5, size = 15, color = "darkblue"), axis.title = element_text(family="serif", size = 9, color = "black"))
+```
