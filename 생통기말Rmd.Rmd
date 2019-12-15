@@ -1,0 +1,1340 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+## 퀴즈 답 모아보기
+
+```{r}
+1. B <- 10000
+ball <- replicate(B, sample(box, 1))
+2. pickball <- table(ball)
+prop.table(pickball)
+3. set.seed(1106)
+```
+
+
+```{r}
+1.
+x <- sample(0:100, 200, replace=TRUE)
+F <- function(a) mean(x<=a)
+1-F(85)
+2.
+m <- mean(x)
+s <- sd(x)
+1-pnorm(85, m, s)
+3. F(55)-F(20)
+```
+
+
+```{r}
+#1.
+set.seed(1)
+n <- 2000
+B <- 10000
+winnings <- function(n){
+money <- sample(c(2,-1), n, replace=TRUE, prob=c(0.335, 1-0.335))
+sum(money)
+}
+S <- replicate(B, winnings(n))
+#2.
+0.335*2+(1-0.335)*(-1)
+#3.
+sqrt(n)*3*sqrt(0.335*(1-0.335))
+```
+
+
+```{r}
+#1.
+set.seed(1)
+n <- 2000
+B <- 10000
+winnings <- function(n){
+money <- sample(c(1,-3), n, replace=TRUE, prob=c(0.6, 0.4))
+sum(money)
+}
+S <- replicate(B, winnings(n))
+#2.
+sqrt(n)*4*sqrt(0.6*0.4)
+#3.
+mean(S<0)
+```
+
+```{r}
+#1.
+N=2000
+p=0.4
+sqrt(p*(1-p)/N)
+#2.
+x_bar <- 0.48
+se <- sqrt(x_bar*(1-x_bar)/30)
+#3.From Q2, what is the probability that we are within 1% from the expected value p (using pnorm)?
+pnorm(0.01/se) - pnorm(-0.01/se)
+```
+
+
+```{r}
+#1. Please compute a 95% confidence interval for the sample size of 2000 and p=0.4
+
+X <- sample(c(1,0), 2000, replace=TRUE, prob=c(0.4, 0.6))
+N<- 2000
+se <- sd(X)/sqrt(N)
+interval <- c(qnorm(0.025, mean(X), se), qnorm(0.975, mean(X), se))
+interval
+
+#2. Please write a command to run a Monte Carlo simulation (B=10,000) for Q1.
+
+B <- 10000
+se <- sd(X)/sqrt(N)
+sim <- replicate(B, {
+  X <- sample(x, N, replace=TRUE)
+ interval <- c(upper=qnorm(0.975, mean(X), se), down=qnorm(0.025, mean(X), se))
+ interval})
+
+#3. Please make a plot for the first 100 confidence intervals.
+
+```
+
+## Exercise 모아보기
+## 13.9 Exercises
+
+1. One ball will be drawn at random from a box containing: 3 cyan balls, 5 magenta balls, and 7 yellow balls. What is the probability that the ball will be cyan?
+
+__1/5__
+
+2. What is the probability that the ball will not be cyan?
+
+__4/5__
+
+3. Instead of taking just one draw, consider taking two draws. You take the second draw without returning the first draw to the box. We call this sampling without replacement. What is the probability that the first draw is cyan and that the second draw is not cyan?
+
+__1/5 x 12/14 = 6/35__
+
+4. Now repeat the experiment, but this time, after taking the first draw and recording the color, return it to the box and shake the box. We call this sampling with replacement. What is the probability that the first draw is cyan and that the second draw is not cyan?
+
+__1/5 x 4/5 = 4/25__
+
+5. Two events A and B are independent if Pr(A and B)=Pr(A)Pr(B). Under which conditions are the draws independent?
+
+A. You don’t replace the draw.
+__B. You replace the draw.__
+C. Neither
+D. Both
+
+6. Say you’ve drawn 5 balls from the box, with replacement, and all have been yellow. What is the probability that the next one is yellow?
+
+__7/15__
+
+7. If you roll a 6-sided die six times, what is the probability of not seeing a 6?
+
+__(5/6)^6__
+
+8. Two teams, say the Celtics and the Cavs, are playing a seven game series. The Cavs are a better team and have a 60% chance of winning each game. What is the probability that the Celtics win at least one game?
+
+__1-(3/5)^4__
+
+9. Create a Monte Carlo simulation to confirm your answer to the previous problem. Use B <- 10000 simulations. Hint: use the following code to generate the results of the first four games:
+
+```{r}
+celtic_wins <- sample(c(0,1), 4, replace = TRUE, prob = c(0.6, 0.4))
+```
+
+The Celtics must win one of these 4 games.
+
+```{r}
+B <- 10000
+wins <- replicate(B, {
+  celtic_wins <- sample(c(0,1), 4, replace = TRUE, prob = c(0.6, 0.4))
+  any(celtic_wins==1)
+})
+mean(wins)
+```
+
+10. Two teams, say the Cavs and the Warriors, are playing a seven game championship series. The first to win four games, therefore, wins the series. The teams are equally good so they each have a 50-50 chance of winning each game. If the Cavs lose the first game, what is the probability that theycnl win the series?
+
+```{r}
+cavs <- expand.grid(rep(list(0:1), 6))
+cavswin <- rowSums(cavs)>=4
+mean(cavswin)
+```
+
+11. Confirm the results of the previous question with a Monte Carlo simulation.
+
+```{r}
+B <- 10000
+cavswin <- replicate(B, {
+  cavs <- sample(c(0,1), 6, replace = TRUE)
+  sum(cavs)>=4
+})
+mean(cavswin)
+```
+
+12. Two teams, A and B, are playing a seven game series. Team A is better than team B and has a p>0.5 chance of winning each game. Given a value p, the probability of winning the series for the underdog team B can be computed with the following function based on a Monte Carlo simulation: 
+
+```{r}
+prob_win <- function(p){
+  B <- 10000
+  result <- replicate(B, {
+    b_win <- sample(c(1,0), 7, replace = TRUE, prob = c(1-p, p))
+    sum(b_win)>=4
+  })
+  mean(result)
+}
+```
+
+Use the function sapply to compute the probability, call it Pr, of winning for p <- seq(0.5, 0.95, 0.025). Then plot the result.
+
+```{r}
+p <- seq(0.5, 0.95, 0.025)
+Pr <- sapply(p, prob_win)
+plot(p, Pr)
+```
+
+13. Repeat the exercise above, but now keep the probability fixed at p <- 0.75 and compute the probability for different series lengths: best of 1 game, 3 games, 5 games,… Specifically, N <- seq(1, 25, 2). Hint: use this function:
+
+```{r}
+prob_win <- function(N, p=0.75){
+  B <- 10000
+  result <- replicate(B, {
+    b_win <- sample(c(1,0), N, replace = TRUE, prob = c(1-p, p))
+    sum(b_win)>=(N+1)/2
+  })
+  mean(result)
+}
+```
+
+```{r}
+N <- seq(1,25,2)
+Pr <- sapply(N, prob_win)
+plot(N, Pr)
+```
+
+### 13.14 Exercises
+
+1. Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is 5 feet or shorter?
+
+```{r}
+pnorm(5*12, 64, 3)
+```
+
+2. Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is 6 feet or taller?
+
+```{r}
+m <- 64
+s <- 3
+1- pnorm(12*5, m, s)
+```
+
+3. Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is between 61 and 67 inches?
+
+```{r}
+pnorm(67, m, s)-pnorm(61, m, s)
+```
+
+4. Repeat the exercise above, but convert everything to centimeters. That is, multiply every height, including the standard deviation, by 2.54. What is the answer now?
+
+```{r}
+m <- 2.54*64
+s <- 2.54*3
+pnorm(67*2.54, m, s) - pnorm(61*2.54, m, s)
+```
+
+5. Notice that the answer to the question does not change when you change units. This makes sense since the answer to the question should not be affected by what units we use. In fact, if you look closely, you notice that 61 and 64 are both 1 SD away from the average. Compute the probability that a randomly picked, normally distributed random variable is within 1 SD from the average.
+
+```{r}
+pnorm(m+s, m, s) - pnorm(m-s, m, s)
+```
+
+6. To see the math that explains why the answers to questions 3, 4, and 5 are the same, suppose we have a random variable with average m and standard error s. Suppose we ask the probability of X being smaller or equal to a. Remember that, by definition, a is (a-m)/s standard deiations s away from the average m. the probability is:
+
+Pr(X≤a)
+
+Now we subtract mu to both ides and then divide both sides by sigma;
+
+Pr((X-m)/s≤(a-m)/s)
+
+The quantity on the left is a standard normal random variable. It has an average of 0 and a standard error of 1. We will call it Z:
+
+Pr(Z≤(a-m)/s)
+
+So, no matter the units, the probability of  
+X≤a is the same as the probability of a standard normal variable being less than (a−m)/s. If mu is the average and sigma the standard error, which of the following R code would give us the right answer in every situation:
+
+A. mean(X<=a)
+__B. pnorm((a - m)/s)__
+C. pnorm((a - m)/s, m, s)
+D. pnorm(a)
+
+7. Imagine the distribution of male adults is approximately normal with an expected value of 69 and a standard deviation of 3. How tall is the male in the 99th percentile? Hint: use qnorm.
+
+```{r}
+qnorm(0.99, mean=69, sd=3)
+```
+
+8. The distribution of IQ scores is approximately normally distributed. The average is 100 and the standard deviation is 15. Suppose you want to know the distribution of the highest IQ across all graduating classes if 10,000 people are born each in your school district. Run a Monte Carlo simulation with B=1000 generating 10,000 IQ scores and keeping the highest. Make a histogram.
+
+```{r}
+B <- 1000
+m <- 100
+s <- 15
+highest <- replicate(B, {
+  IQ<- rnorm(10000, m, s)
+  max(IQ)})
+highest <- as.data.frame(highest)
+ggplot()+geom_histogram(aes(highest$highest)) +labs(x="Highest IQ score")
+```
+
+## 14.10 Exercises
+
+
+1. In American Roulette you can also bet on green. There are 18 reds, 18 blacks and 2 greens (0 and 00). What are the chances the green comes out?
+
+```{r}
+2/(18+18+2)
+```
+
+2. The payout for winning on green is 17 dollars. This means that if you bet a dollar and it lands on green, you get 17. Create a sampling model using sample to simulate the random variable X for your winnings. Hint: see the example below for how it should look like when betting on red.
+
+```{r}
+x <- sample(c(1,-1), 1, prob = c(9/19, 10/19))
+```
+
+```{r}
+x2 <- sample(c(17,-1),1, prob = c(2/38, 36/38))
+```
+
+3. Compute the expected value of X.
+```{r}
+2/38 * 17 + 36/38 * -1
+```
+
+4. Compute the standard error of X.
+```{r}
+abs((17 - -1))*sqrt(2/38*36/38)
+```
+
+5. Now create a random variable S hat is the sum of your winnings after betting on green 1000 times. Hint: change the argument `size` and `replace` in your answer to question 2. Start your code by setting the seed to 1 with `set.seed(1)`.
+
+```{r}
+set.seed(1)
+B <- 1000
+greeeen <- sample(c(17,-1), B, replace=TRUE, prob = c(2/38, 36/38))
+S <- sum(greeeen)
+S
+```
+
+6. What is the expected value of S?
+
+```{r}
+B * (2/38 * 17 + 36/38 * -1)
+```
+
+7. What is the standard error of S?
+
+```{r}
+sqrt(B) * abs((17 - -1))*sqrt(2/38*36/38)
+```
+
+8. What is the probability that you end up winning money? Hint: use the CLT.
+
+```{r}
+m <- B * (2/38 * 17 + 36/38 * -1)
+se <- sqrt(B) * abs((17 - -1))*sqrt(2/38*36/38)
+1 - pnorm(0, m, se)
+```
+
+9. Create a Monte Carlo simulation that generates 1,000 outcomes of S. Compute the average and standard deviation of the resulting list to confirm the results of 6 and 7. Start your code by setting the seed to 1 with set.seed(1).
+
+```{r}
+set.seed(1)
+listoutcome <- replicate(B,{
+  X <- sample(c(17,-1), B, replace=TRUE, prob = c(2/38, 36/38))
+  sum(X)
+})
+mean(listoutcome)
+sd(listoutcome)
+```
+
+10. Now check your answer to 8 using the Monte Carlo result.
+```{r}
+mean(listoutcome>0)
+```
+
+11. The Monte Carlo result and the CLT approximation are close, but not that close. What could account for this?
+
+A. 1,000 simulations is not enough. If we do more, they match.  
+__B. The CLT does not work as well when the probability of success is small. In this case, it was 1/19. If we make the number of roulette plays bigger, they will match better.__
+C. The difference is within rounding error.  
+D. The CLT only works for averages.  
+
+12. Now create a random variable Y that is your average winnings per bet after playing off your winnings after betting on green 1,000 times.
+
+```{r}
+X <- sample(c(17,-1), 1000, replace=TRUE, prob = c(2/38, 36/38))
+Y <- mean(X)
+```
+
+13. What is the expected value of Y?
+
+```{r}
+1000 * (2/38 * 17 + 36/38 * -1)
+```
+
+
+14. What is the standard error of Y?
+
+```{r}
+sqrt(1000)*abs((17 - -1))*sqrt(2/38*36/38)
+```
+
+15. What is the probability that you end up with winnings per game that are positive? Hint: use the CLT.
+
+```{r}
+m <- 1000 * (2/38 * 17 + 36/38 * -1)
+se <- sqrt(1000)*abs((17 - -1))*sqrt(2/38*36/38)
+1 - pnorm(0, m, se)
+```
+
+16. Create a Monte Carlo simulation that generates 2,500 outcomes of Y. Compute the average and standard deviation of the resulting list to confirm the results of 6 and 7. Start your code by setting the seed to 1 with `set.seed(1)`.
+
+```{r}
+set.seed(1)
+listoutcome2 <- replicate(2500,{
+  Y <- sample(c(17,-1), 1000, replace=TRUE, prob = c(2/38, 36/38))
+  mean(Y)
+})
+mean(listoutcome2)
+sd(listoutcome2)
+```
+
+17. Now check your answer to 8 using the Monte Carlo result.
+
+```{r}
+mean(listoutcome2>0)
+```
+
+18. The Monte Carlo result and the CLT approximation are now much closer. What could account for this?
+
+A. We are now computing averages instead of sums.  
+B. 2,500 Monte Carlo simulations is not better than 1,000.  
+__C. The CLT works better when the sample size is larger. We increased from 1,000 to 2,500.__
+D. It is not closer. The difference is within rounding error.
+
+## 14.12 Exercises
+
+1. Create a random variable S with the earnings of your bank if you give out 10,000 loans, the defalut rate is 0.3, and you lose $200,000 in each foreclosure. Hint: use the code we showed in the previous section, but change the parameters.
+
+```{r}
+n <- 10000
+loss_per_foreclosure <- -200000
+rate <- 0.03
+loans <- sample(c(0,1), n, replace = TRUE, prob=c(1-rate, rate))
+S <- sum(loans * loss_per_foreclosure)
+S
+```
+
+2. Run a Monte Carlo simulation with 10,000 outcomes for $S$. Make a histogram of the results.
+
+```{r}
+sim <- replicate(n, {
+  loans <- sample(c(0,1), n, replace = TRUE, prob=c(1-rate, rate))
+  sum(loans * loss_per_foreclosure)
+})
+hist(sim)
+```
+
+3. What is the expected value of S?
+
+```{r}
+n*(rate*loss_per_foreclosure + (1-rate)*0)
+```
+
+4. What is the standard error of S?
+
+```{r}
+sqrt(n) * abs(loss_per_foreclosure) * sqrt(rate*(1-rate))
+```
+
+5. Suppose we give out loans for $180,000. What should the interest rate be so that our expected value is 0?
+
+```{r}
+x <- -(loss_per_foreclosure*rate) / (1 - rate)
+x / 180000
+```
+
+6. What should the interest rate be so that the chance of losing money is 1 in 20? In math notation, what should the interest rate be so that Pr(S < 0) = 0.05?
+
+```{r}
+z <- qnorm(0.05)
+x <- -loss_per_foreclosure*( n*rate - z*sqrt(n*rate*(1-rate)))/ ( n*(1-rate) + z*sqrt(n*rate*(1 -rate)))
+x / 180000
+```
+
+7. If the bank wants to minimize the probabilities of losing money, which of the following does not make interest rates go up?
+
+A. A smaller pool of loans.  
+B. A larger probability of default.  
+C. A smaller required probability of losing money.  
+__D. The number of Monte Carlo simulations.__
+
+## 15.3 Exercises
+
+1. Suppose you poll a population in which a proportion p of voters are Democrats and 1-p are Republicans. Your sample size is N=25. Consider the random variable S which is the total number of Democrats in your sample. What is the expected value of this random variable? Hint: it’s a function of  
+p.
+
+__25p__
+
+2. What is the standard error of S? Hint: it’s a function of p.
+
+__$\sqrt{25p(1-p)}$__
+
+3. Consider the random variable S/N. This is equivalent to the sample average, which we have been denoting as $\bar{X}$. What is the expected value of the  $\bar{X}$? Hint: it’s a function of p.
+
+__$\sqrt{p(1-p)/N}$__
+
+4. What is the standard error of $\bar{X}$? Hint: it’s a function of p.
+
+__$\sqrt{p(1-p)/N}$__
+
+5. Write a line of code that gives you the standard error se for the problem above for several values of p, specifically for p <- seq(0, 1, length = 100). Make a plot of se versus p.
+
+```{r}
+N <- 25
+p <- seq(0, 1, length = 100)
+se <- sqrt(p*(1-p)/N)
+plot(p, se)
+```
+
+6. Copy the code above and put it inside a for-loop to make the plot for N=25, N=100, and N=1000.
+
+```{r}
+N <- c(25, 100, 1000)
+for(n in N){se <- sqrt(p*(1-p)/n)
+plot(p, se)
+}
+```
+
+7. If we are interested in the difference in proportions p-(1-p), our estimate is $d = \bar{X} - (1-\bar{X})$. Use the rules we learned about sums of random variables and scaled random variables to derive the expected value of d.
+
+__$E[2\bar{X}-1] = 2E[\bar{X}]-1 = 2p-1$__
+
+8. What is the standard error of d?
+
+__$SE[2\bar{X}-1] = 2SE[\bar{X}] = 2\sqrt{p(1-p)/N}$__
+
+9. If the actual p=.45, it means the Republicans are winning by a relatively large margin since d=−.1 , which is a 10% margin of victory. In this case, what is the standard error of $2\hat{X}-1$ if we take a sample of N=25?
+
+```{r}
+N <- 25
+p <- 0.45
+2*sqrt(p*(1-p)/N)
+```
+
+10. Given the answer to 9, which of the following best describes your strategy of using a sample size of N=25?
+
+A. The expected value of our estimate $2\bar{X}-1$ is d, so our prediction will be right on.
+__B. Our standard error is larger than the difference, so the chances of $2\bar{X}-1$ being positive and throwing us off were not that small. We should pick a larger sample size.__
+C. The difference is 10% and the standard error is about 0.2, therefore much smaller than the difference.
+D. Because we don't know p, we have no way of knowing that making N larger would actually improve our standard error.
+
+## 15.5 Exercises
+
+1. Write an *urn* model function that takes the proportion of Democrats $p$ and the sample size $N$ as arguments and returns the sample average if Democrats are 1s and Republicans are 0s. Call the function `take_sample`.
+```{r}
+take_sample <- function(p, N) {
+  urn <- sample(c(0,1), size=N, replace=TRUE, prob=c(1-p,p))
+  mean(urn)
+}
+```
+
+2. Now assume `p <- 0.45` and that your sample size is $N=100$. Take a sample 10,000 times and save the vector of `mean(X) - p` into an object called `errors`. Hint: use the function you wrote for exercise 1 to write this in one line of code.
+```{r}
+p <- 0.45
+N=100
+errors <- replicate(10000, take_sample(p, N)-p)
+```
+
+3. The vector `errors` contains, for each simulated sample, the difference between the actual $p$ and our estimate $\bar{X}$. We refer to this difference as the *error*. Compute the average and make a histogram of the errors generated in the Monte Carlo simulation and select which of the following best describes their distributions:
+```{r}
+mean(errors)
+hist(errors)
+```
+a. The errors are all about 0.05.
+
+b. The errors are all about -0.05.
+
+c. The errors are symmetrically distributed around 0.
+
+d. The errors range from -1 to 1.
+
+answer : c
+
+4. The error $\bar{X}−p$ is a random variable. In practice, the error is not observed because we do not know $p$. Here we observe it because we constructed the simulation. What is the average size of the error if we define the size by taking the absolute value $∣\bar{X}−p∣$?
+```{r}
+mean(abs(errors))
+```
+
+5. The standard error is related to the typical **size** of the error we make when predicting. We say **size** because we just saw that the errors are centered around 0, so thus the average error value is 0. For mathematical reasons related to the Central Limit Theorem, we actually use the standard deviation of `errors` rather than the average of the absolute values to quantify the typical size. What is this standard deviation of the errors?
+
+```{r}
+sd(errors)
+```
+
+6. The theory we just learned tells us what this standard deviation is going to be because it is the standard error of $\bar{X}$. What does theory tell us is the standard error of $\bar{X}$ for a sample size of 100?
+```{r}
+p <- 0.45
+N <- 100
+sqrt(p*(1-p)/N)
+```
+
+7. In practice, we don’t know $p$, so we construct an estimate of the theoretical prediction based by plugging in $\bar{X}$ for $p$. Compute this estimate. Set the seed at 1 with `set.seed(1)`.
+```{r}
+set.seed(1)
+X <- sample(c(0,1), size=N, replace=TRUE, prob=c(1-p,p))
+barX <- mean(X)
+se <- sqrt(barX*(1-barX)/N)
+```
+
+8. Note how close the standard error estimates obtained from the Monte Carlo simulation (exercise 5), the theoretical prediction (exercise 6), and the estimate of the theoretical prediction (exercise 7) are. The theory is working and it gives us a practical approach to knowing the typical error we will make if we predict $p$ with $\bar{X}$. Another advantage that the theoretical result provides is that it gives an idea of how large a sample size is required to obtain the precision we need. Earlier we learned that the largest standard errors occur for $p=0.5$. Create a plot of the largest standard error for $N$ ranging from 100 to 5,000. Based on this plot, how large does the sample size have to be to have a standard error of about 1%?
+```{r}
+N <- seq(100, 5000, len=100)
+p <- 0.5
+se <- sqrt(p*(1-p)/N)
+data.frame(N, se) %>% ggplot(aes(N, se)) + geom_line()
+```
+
+a. 100
+
+b. 500
+
+c. 2,500
+
+d. 4,000
+
+answer : c
+
+9. For sample size $N=100$, the central limit theorem tells us that the distribution of $\bar{X}$ is:
+
+a. practically equal to $p$.
+
+b. approximately normal with expected value $p$ and standard error $\sqrt{p(1−p)/N}$.
+
+c. approximately normal with expected value $\bar{X}$ and standard error $\sqrt{\bar{X}(1−\bar{X})/N}$.
+
+d. not a random variable.
+
+answer : b
+
+10. Based on the answer from exercise 8, the error $\bar{X}−p$ is:
+
+a. practically equal to 0.
+
+b. approximately normal with expected value $0$ and standard error $\sqrt{p(1−p)/N}$.
+
+c. approximately normal with expected value $p$ and standard error $\sqrt{p(1−p)/N}$.
+
+d. not a random variable.
+
+answer : b
+
+11. To corroborate your answer to exercise 9, make a qq-plot of the `errors` you generated in exercise 2 to see if they follow a normal distribution.
+```{r}
+p <- 0.45
+N=100
+errors <- replicate(10000, take_sample(p, N)-p)
+qqnorm(errors)
+qqline(errors)
+```
+
+12. If $p=0.45$ and $N=100$ as in exercise 2, use the CLT to estimate the probability that $\bar{X}>0.5$. You can assume you know $p=0.45$ for this calculation.
+```{r}
+1-pnorm(0.5, p, sqrt(p*(1-p)/N))
+```
+
+13. Assume you are in a practical situation and you don’t know $p$. Take a sample of size $N=100$ and obtain a sample average of $\bar{X}=0.51$. What is the CLT approximation for the probability that your error is equal to or larger than 0.01?
+
+$Pr(\hat{X}≥0.01)$
+```{r}
+N <- 100
+bar <- 0.51
+hat_se <- sqrt(bar*(1-bar)/N)
+1-pnorm(0.01, 0, hat_se)
+```
+
+## 15.7 Exercises
+
+```{r}
+library(dslabs)
+data("polls_us_election_2016")
+```
+
+```{r}
+library(tidyverse)
+polls <- polls_us_election_2016 %>% 
+  filter(enddate >= "2016-10-31" & state == "U.S.") 
+```
+
+1. For the first poll, you can obtain the samples size and estimated Clinton percentage with:
+
+```{r}
+N <- polls$samplesize[1]
+x_hat <- polls$rawpoll_clinton[1]/100
+```
+
+Assume there are only two candidates and construct a 95% confidence interval for the election night proportion p.
+
+```{r}
+se_hat <- sqrt(x_hat * (1-x_hat) / N)
+c(x_hat-1.96 * se_hat, x_hat+1.96 * se_hat)
+```
+
+2. Now use dplyr to add a confidence interval as two columns, call them lower and upper, to the object poll. Then use select to show the pollster, enddate, x_hat,lower, upper variables. Hint: define temporary columns x_hat and se_hat.
+
+```{r}
+polls %>% mutate(x_hat = polls$rawpoll_clinton/100, se_hat = sqrt(x_hat*(1-x_hat)/samplesize),
+                 lower = x_hat - 1.96*se_hat, upper = x_hat + 1.96*se_hat) %>%
+  select(pollster, enddate, x_hat, lower, upper)
+```
+
+3. The final tally for the popular vote was Clinton 48.2% and Trump 46.1%. Add a column, call it hit, to the previous table stating if the confidence interval included the true proportion p=0.482 or not. 
+
+```{r}
+polls %>% mutate(x_hat = polls$rawpoll_clinton/100, se_hat = sqrt(x_hat*(1-x_hat)/samplesize),
+                 lower = x_hat - 1.96*se_hat, upper = x_hat + 1.96*se_hat) %>%
+  select(pollster, enddate, x_hat, lower, upper) %>% mutate(hit=lower<=0.482 & upper>=0.482) 
+```
+
+4. For the table you just created, what proportion of confidence intervals included p?
+
+```{r}
+polls %>% mutate(x_hat = polls$rawpoll_clinton/100, se_hat = sqrt(x_hat*(1-x_hat)/N),
+                 lower = x_hat - 1.96*se_hat, upper = x_hat + 1.96*se_hat) %>%
+  select(pollster, enddate, x_hat, lower, upper) %>% mutate(hit=lower<=0.482 & upper>=0.482) %>% summarize(mean(hit))
+```
+
+5. If these confidence intervals are constructed correctly, and the theory holds up, what proportion should include p?
+
+__0.95__
+
+6. A much smaller proportion of the polls than expected produce confidence intervals containing p. If you look closely at the table, you will see that most polls that fail to include p are underestimating. The reason for this is undecided voters, individuals polled that do not yet know who they will vote for or do not want to say. Because, historically, undecideds divide evenly between the two main candidates on election day, it is more informative to estimate the spread or the difference between the proportion of two candidates d, which in this election was 0.482−0.461=0.021. Assume that there are only two parties and that d=2p−1, redefine polls as below and re-do exercise 1, but for the difference.
+
+```{r}
+polls <- polls_us_election_2016 %>% 
+  filter(enddate >= "2016-10-31" & state == "U.S.")  %>%
+  mutate(d_hat = rawpoll_clinton / 100 - rawpoll_trump / 100)
+```
+
+```{r}
+N <- polls$samplesize[1]
+d_hat <- polls$d_hat[1]
+x_hat <- (d_hat+1)/2
+se_hat <- 2*sqrt(x_hat*(1-x_hat)/N)
+c(d_hat-1.96 * se_hat, d_hat+1.96 * se_hat)
+```
+
+7. Now repeat exercise 3, but for the difference.
+
+```{r}
+polls %>% mutate(X_hat = (d_hat+1)/2, se_hat = 2*sqrt(X_hat*(1-X_hat)/samplesize), lower = d_hat-1.96*se_hat, upper = d_hat + 1.96*se_hat) %>% select(pollster, enddate, d_hat, lower, upper) %>% mutate(hit = lower<=0.021 & upper>=0.021)
+```
+
+8. Now repeat exercise 4, but for the difference.
+
+```{r}
+polls %>% mutate(X_hat = (d_hat+1)/2, se_hat = 2*sqrt(X_hat*(1-X_hat)/samplesize), lower = d_hat - 1.96*se_hat, upper = d_hat+1.96*se_hat) %>% select(pollster, enddate, d_hat, lower, upper) %>% mutate(hit = lower<=0.021 & upper>=0.021) %>% summarize(mean(hit))
+```
+
+9. Although the proportion of confidence intervals goes up substantially, it is still lower than 0.95. In the next chapter, we learn the reason for this. To motivate this, make a plot of the error, the difference between each poll’s estimate and the actual d=0.021. Stratify by pollster.
+
+```{r}
+polls %>% mutate(error = d_hat - 0.021) %>% 
+  ggplot(aes(pollster, error)) +
+  geom_point()
+```
+
+10. Redo the plot that you made for exercise 9, but only for pollsters that took five or more polls.
+
+```{r}
+polls %>% mutate(error = d_hat - 0.021) %>%
+  group_by(pollster) %>%
+  filter(n() >= 5) %>%
+  ggplot(aes(pollster, error)) +
+  geom_point()
+```
+
+## 15.11 Exercises
+
+1. A famous athlete has an impressive career, winning 70% of her 500 career matches. However, this athlete gets criticized because in important events, such as the Olympics, she has a losing record of 8 wins and 9 losses. Perform a Chi-square test to determine if this losing record can be simply due to chance as opposed to not performing well under pressure.
+
+```{r}
+two_by_two <- data.frame(results = c("wins", "losses"), 
+                     important_events = c(8, 9),
+                     not_important_events = c(350-8, 150-9))
+two_by_two
+chisq_test <- two_by_two %>% select(-results) %>% chisq.test()
+chisq_test$p.value
+```
+
+2. Why did we use the Chi-square test instead of Fisher’s exact test in the previous exercise?
+
+A. It actually does not matter, since they give the exact same p-value.
+B. Fisher’s exact and the Chi-square are different names for the same test.
+__C. Because the sum of the rows and columns of the two-by-two table are not fixed so      the hypergeometric distribution is not an appropriate assumption for the null         hypothesis. For this reason, Fisher’s exact test is rarely applicable with observational data.__
+D. Because the Chi-square test runs faster.!
+
+3. Compute the odds ratio of “losing under pressure” along with a confidence interval.
+
+```{r}
+odds_important_events <- with(two_by_two, (important_events[1]/sum(important_events)) / (important_events[2]/sum(important_events)))
+odds_not_important_events <- with(two_by_two, (not_important_events[1]/sum(not_important_events)) / (not_important_events[2]/sum(not_important_events)))
+log_or <- log(odds_important_events / odds_not_important_events)
+se <- two_by_two %>% select(-results) %>%
+  summarize(se = sqrt(sum(1/important_events) + sum(1/not_important_events))) %>%
+  pull(se)
+ci <- log_or + c(-1,1) * qnorm(0.975) * se
+exp(ci)
+```
+
+4. Notice that the p-value is larger than 0.05 but the 95% confidence interval does not include 1. What explains this?
+
+A. We made a mistake in our code.
+B. These are not t-tests so the connection between p-value and confidence intervals      does not apply.
+__C. Different approximations are used for the p-value and the confidence interval         calculation. If we had a larger sample size the match would be better.__
+D. We should use the Fisher exact test to get confidence intervals.
+
+5. Multiply the two-by-two table by 2 and see if the p-value and confidence retrieval are a better match.
+
+```{r}
+two_by_two %>% select(-results) %>%
+  mutate(important_events = important_events*10, not_important_events = not_important_events*10) %>%
+  chisq.test() %>% .$p.value
+```
+
+## 16.3 Exercises
+
+Heights dataset;
+
+```{r}
+library(dslabs)
+data(heights)
+x <- heights %>% filter(sex == "Male") %>%
+  pull(height)
+```
+
+1. Mathematically speaking, x is our population. Using the urn analogy, we have an urn with the values of x in it. What are the average and standard deviation of our population?
+
+```{r}
+mean(x)
+sd(x)
+```
+
+2. Call the population average computed above μ and the standard deviation σ. Now take a sample of size 50, with replacement, and construct an estimate for μ and σ.
+
+```{r}
+N <- 50
+X <- sample(x, N, replace = TRUE)
+mu <- mean(X)
+sigma <- sd(X)
+mu
+sigma
+```
+
+3. What does the theory tell us about the sample average $\bar{X}$ and how it is related to μ?
+
+A. It is practically identical to μ.
+__B. It is a random variable with expected value μ and standard error $σ/\sqrt{N}$.__
+C. It is a random variable with expected value μ and standard error σ.
+D. Contains no information.
+
+4. So how is this useful? We are going to use an oversimplified yet illustrative example. Suppose we want to know the average height of our male students, but we only get to measure 50 of the 708. We will use $\bar{X}$ as our estimate. We know from the answer to exercise 3 that the standard estimate of our error $\bar{X}$−μ is $σ/\sqrt{N}$. We want to compute this, but we don’t know σ. Based on what is described in this section, show your estimate of σ.
+
+```{r}
+sigma
+```
+
+5. Now that we have an estimate of σ, let’s call our estimate s. Construct a 95% confidence interval for μ.
+
+```{r}
+se <- sd(X)/sqrt(N)
+interval <- c(qnorm(0.025, mean(X), se), qnorm(0.975, mean(X), se))
+interval
+```
+
+6. Now run a Monte Carlo simulation in which you compute 10,000 confidence intervals as you have just done. What proportion of these intervals include μ?
+
+```{r}
+N <- 50
+B <- 10000
+se <- sd(X)/sqrt(N)
+sim <- replicate(B, {
+  X <- sample(x, N, replace=TRUE)
+  mean(x)<=qnorm(0.975, mean(X), se) & mean(x) >= qnorm(0.025, mean(X), se)})
+mean(sim)
+```
+
+7. In this section, we talked about pollster bias. We used visualization to motivate the presence of such bias. Here we will give it a more rigorous treatment. We will consider two pollsters that conducted daily polls. We will look at national polls for the month before the election.
+
+```{r}
+data(polls_us_election_2016)
+polls <- polls_us_election_2016 %>% 
+  filter(pollster %in% c("Rasmussen Reports/Pulse Opinion Research",
+                         "The Times-Picayune/Lucid") &
+           enddate >= "2016-10-15" &
+           state == "U.S.") %>% 
+  mutate(spread = rawpoll_clinton/100 - rawpoll_trump/100) 
+```
+
+We want to answer the question: is there a poll bias? Make a plot showing the spreads for each poll.
+
+```{r}
+polls %>% ggplot(aes(pollster, spread)) + 
+  geom_boxplot() + 
+  geom_point()
+```
+
+8. The data does seem to suggest there is a difference. However, these data are subject to variability. Perhaps the differences we observe are due to chance.
+
+The urn model theory says nothing about pollster effect. Under the urn model, both pollsters have the same expected value: the election day difference, that we call d.
+
+To answer the question “is there an urn model?”, we will model the observed data $Y_{i,j}=d+b_i+ε_{i,j}$ in the following way:
+with i=1,2 indexing the two pollsters, $b_i$ the bias for pollster i and $ε_{i,j}$ poll to poll chance variability. We assume the ε are independent from each other, have expected value 0 and standard deviation $σ_i$ regardless of j.
+Which of the following best represents our question?
+A. Is ε_{i,j}= 0?
+B. How close are the Y_{i,j} to d?
+__C. Is $b_1$ different with $b_2$?__
+D. Are $b_1=0$ and $b_2=0?$
+
+9. In the right side of this model only $ε_{i,j}$ is a random variable. The other two are constants. What is the expected value of $Y_{1,j}$?
+
+$E[Y_{1,j}]$ = $E[d + b_1 + ε_{i,j}]$$ = 
+d+b_1+$E[ε_{i,j}]$ = d + $b_1$
+
+10. Suppose we define $\bar{Y}_1$ as the average of poll results from the first poll, $Y_{1,1},...,Y_{1,N_1}$ with $N_1$ the number of polls conducted by the first pollster:
+
+```{r}
+polls %>% 
+  filter(pollster=="Rasmussen Reports/Pulse Opinion Research") %>% 
+  summarize(N_1 = n())
+```
+
+
+What is the expected values $\bar{Y}_1$?
+
+$d + b_1$
+
+11. What is the standard error of $\bar{Y}_1$ ?
+
+$\sigma_1/\sqrt{N_1}$
+
+12. Suppose we define $\bar{Y}_2$ as the average of poll results from the first poll, $Y_{2,1}, ... ,Y_{2,N_2}$ with $N_2$ the number of polls conducted by the first pollster. What is the expected value $\bar{Y}_2$?
+
+$d + b_2$
+
+13. What is the standard error of $\bar{Y}_2$ ?
+
+$\sigma_2/\sqrt{N_2}$
+
+14. Using what we learned by answering the questions above, what is the expected value of $\bar{Y}_{2} - \bar{Y}_1$?
+
+$E[\bar{Y}_{2} - \bar{Y}_1] = E[\bar{Y}_{2}] - E[\bar{Y}_1] = (d + b_2) - (d + b_1) = b_2 - b1$
+
+15. Using what we learned by answering the questions above, what is the standard error of $\bar{Y}_{2} - \bar{Y}_1$?
+
+$ SE[\bar{Y}_{2} - \bar{Y}_1] = \sqrt{SE[\bar{Y}_{2}]^2 + SE[\bar{Y}_1]^2} = \sqrt{\sigma_2^2/N_2 + \sigma_1^2/N_1}$
+
+16. The answer to the question above depends on $\sigma_1$ and $\sigma_2$, which we don't know. We learned that we can estimate these with the sample standard deviation. Write code that computes these two estimates.
+
+```{r}
+polls %>% group_by(pollster) %>%
+  summarize(s = sd(spread))
+```
+
+17. What does the CLT tell us about the distribution of $\bar{Y}_2 - \bar{Y}_1$?
+
+A. Nothing because this is not the average of a sample.
+B. Because the $Y_{ij}$ are approximately normal, so are the averages.
+__C. Note that $\bar{Y}_2$ and $\bar{Y}_1$ are sample averages, so if we assume $N_2$ and $N_1$ are large enough, each is approximately normal. The difference of normals is also normal.__
+D. The data are not 0 or 1, so CLT does not apply.
+
+18. We have constructed a random variable that has expected value $b_2 - b_1$, the pollster bias difference. If our model holds, then this random variable has an approximately normal distribution and we know its standard error. The standard error depends on $\sigma_1$ and $\sigma_2$, but we can plug the sample standard deviations we computed above. We started off by asking: is $b_2 - b_1$ different from 0? Use all the information we have learned above to construct a 95% confidence interval for the difference $b_2$ and $b_1$.
+
+```{r}
+res <- polls %>% group_by(pollster) %>% 
+  summarize(avg = mean(spread), s = sd(spread), N = n()) 
+estimate <- res$avg[2] - res$avg[1]
+se_hat <- with(res, sqrt(s[2]^2/N[2] + s[1]^2/N[1]))
+estimate + c(-1,1)*qnorm(0.975)*se_hat
+```
+
+19. The confidence interval tells us there is relatively strong pollster effect resulting in a difference of about 5%. Random variability does not seem to explain it. We can compute a p-value to relay the fact that chance does not explain it. What is the p-value?
+
+```{r}
+2*(1 - pnorm(estimate/se_hat, 0, 1))
+```
+
+20\. The statistic formed by dividing our estimate of $b_2-b_1$ by its estimated standard error:
+
+$\bar{Y}_2 - \bar{Y}_1}/{\sqrt{s_2^2/N_2 + s_1^2/N_1}}$
+
+is called the t-statistic. Now notice that we have more than two pollsters. We can also test for pollster effect using all pollsters, not just two. The idea is to compare the variability across polls to variability within polls. We can actually construct statistics to test for effects and approximate their distribution. The area of statistics that does this is called Analysis of Variance or ANOVA. We do not cover it here, but ANOVA provides a very useful set of tools to answer questions such as: is there a pollster effect? 
+
+For this exercise, create a new table:
+
+```{r}
+polls <- polls_us_election_2016 %>% 
+  filter(enddate >= "2016-10-15" &
+           state == "U.S.") %>%
+  group_by(pollster) %>%
+  filter(n() >= 5) %>% 
+  mutate(spread = rawpoll_clinton/100 - rawpoll_trump/100) %>%
+  ungroup()
+```
+
+## 16.7 Exercises
+
+1. In 1999, in England, Sally Clark58 was found guilty of the murder of two of her sons. Both infants were found dead in the morning, one in 1996 and another in 1998. In both cases, she claimed the cause of death was sudden infant death syndrome (SIDS). No evidence of physical harm was found on the two infants so the main piece of evidence against her was the testimony of Professor Sir Roy Meadow, who testified that the chances of two infants dying of SIDS was 1 in 73 million. He arrived at this figure by finding that the rate of SIDS was 1 in 8,500 and then calculating that the chance of two SIDS cases was 8,500×8,500≈73 million. Which of the following do you agree with?
+
+__A. Sir Meadow assumed that the probability of the second son being affected by SIDS      was independent of the first son being affected, thereby ignoring possible genetic    causes. If genetics plays a role then: $\mbox{Pr}(\mbox{second case of SIDS} \mid \mbox{first case of SIDS}) < \mbox{P}r(\mbox{first case of SIDS})$.__
+B. Nothing. The multiplication rule always applies in this way: Pr(A and B)=Pr(A)Pr(B)
+C. Sir Meadow is an expert and we should trust his calculations.
+C. Numbers don’t lie.
+
+2. Let’s assume that there is in fact a genetic component to SIDS and the probability of Pr(second case of SIDS∣first case of SIDS)=1/100, is much higher than 1 in 8,500. What is the probability of both of her sons dying of SIDS?
+
+```{r}
+Pr1 <- 1/8500
+Pr2 <- 1/100
+Pr1*Pr2
+```
+
+3. Many press reports stated that the expert claimed the probability of Sally Clark being innocent as 1 in 73 million. Perhaps the jury and judge also interpreted the testimony this way. This probability can be written as the probability of a mother is a son-murdering psychopath given that two of her children are found dead with no evidence of physical harm. According to Bayes’ rule, what is this?
+
+```{r}
+(1 / 8500) * (1 / 100)
+```
+
+4. Assume that the chance of a son-murdering psychopath finding a way to kill her children, without leaving evidence of physical harm, is:
+
+Pr(A∣B)=0.50
+ 
+with A = two of her children are found dead with no evidence of physical harm and B = a mother is a son-murdering psychopath = 0.50. Assume that the rate of son-murdering psychopaths mothers is 1 in 1,000,000. According to Bayes’ theorem, what is the probability of Pr(B∣A)?
+
+```{r}
+pr_ab <- 0.5
+pr_b <- 1 / 1000000
+pr_abc <- 0.5 / (1 / 1000000) * (1 - 1 / 1000000)
+pr_bc <- 1 - 1 / 1000000
+pr_ba <- pr_ab * pr_b / (pr_ab * pr_b + pr_abc * pr_bc)
+pr_ba
+```
+
+5. After Sally Clark was found guilty, the Royal Statistical Society issued a statement saying that there was “no statistical basis” for the expert’s claim. They expressed concern at the “misuse of statistics in the courts”. Eventually, Sally Clark was acquitted in June 2003. What did the expert miss?
+
+A. He made an arithmetic error.
+__B. He made two mistakes. First, he misused the multiplication rule and did not take into account how rare it is for a mother to murder her children. After using Bayes’ rule, we found a probability closer to 0.5 than 1 in 73 million.__
+C. He mixed up the numerator and denominator of Bayes’ rule.
+D. He did not use R.
+
+6. Florida is one of the most closely watched states in the U.S. election because it has many electoral votes, and the election is generally close, and Florida tends to be a swing state that can vote either way. Create the following table with the polls taken during the last two weeks:
+
+```{r}
+library(tidyverse)
+library(dslabs)
+data(polls_us_election_2016)
+polls <- polls_us_election_2016 %>% 
+  filter(state == "Florida" & enddate >= "2016-11-04" ) %>% 
+  mutate(spread = rawpoll_clinton/100 - rawpoll_trump/100)
+```
+
+Take the average spread of these polls. The CLT tells us this average is approximately normal. Calculate an average and provide an estimate of the standard error. Save your results in an object called results.
+
+```{r}
+results <- polls %>% summarize(avg = mean(spread),  se = sd(spread)/sqrt(n()))
+results
+```
+
+7. Now assume a Bayesian model that sets the prior distribution for Florida’s election night spread d to be Normal with expected value μ and standard deviation τ. What are the interpretations of μ and τ?
+
+A. μ and τ are arbitrary numbers that let us make probability statements about d.
+__B. μ and τ summarize what we would predict for Florida before seeing any polls. Based    on past elections, we would set μ close to 0 because both Republicans and Democrats    have won, and τ at about 0.02, because these elections tend to be close.__
+C. μ and τ summarize what we want to be true. We therefore set μ at 0.10 and τ at 0.01.
+D. The choice of prior has no effect on Bayesian analysis.
+
+8. The CLT tells us that our estimate of the spread ^d has normal distribution with expected value d and standard deviation σ calculated in problem 6. Use the formulas we showed for the posterior distribution to calculate the expected value of the  posterior distribution if we set μ=0 and τ=0.01.
+
+```{r}
+sigma <- results$se
+Y <- results$avg
+tau <- 0.01
+miu <- 0
+B <- sigma^2 / (sigma^2 + tau^2)
+B
+estimate <- miu + (1 - B) * (Y - miu)
+estimate
+```
+
+9. Now compute the standard deviation of the posterior distribution.
+
+```{r}
+se <- sqrt(1/(1/sigma^2+1/tau^2))
+se
+```
+
+10. Using the fact that the posterior distribution is normal, create an interval that has a 95% probability of occurring centered at the posterior expected value. Note that we call these credible intervals.
+
+```{r}
+ci <- c(estimate - qnorm(0.975) * se, estimate + qnorm(0.975) * se)
+ci
+```
+
+11. According to this analysis, what was the probability that Trump wins Florida?
+
+```{r}
+pnorm(0, estimate, se)
+```
+
+12. Now use sapply function to change the prior variance from seq(0.005, 0.05, len = 100) and observe how the probability changes by making a plot.
+
+```{r}
+taus <- seq(0.005, 0.05, len = 100)
+p_calc <- function(tau) {
+  B <- sigma^2 / (sigma^2 + tau^2)
+  est <- miu + (1 - B) * (Y - miu)
+  se <- sqrt(1/(1/sigma^2+1/tau^2))
+  pnorm(0, estimate, se)
+}
+ps <- sapply(taus, p_calc)
+plot(taus, ps)
+```
+
+## 16.9 Exercises
+1. Create this table:
+```{r}
+library(tidyverse)
+library(dslabs)
+data("polls_us_election_2016")
+polls <- polls_us_election_2016 %>% 
+  filter(state != "U.S." & enddate >= "2016-10-31") %>% 
+  mutate(spread = rawpoll_clinton/100 - rawpoll_trump/100)
+```
+Now for each poll use the CLT to create a 95% confidence interval for the spread reported by each poll. Call the resulting object cis with columns lower and upper for the limits of the confidence intervals. Use the `select` function to keep the columns `state, startdate, end date, pollster, grade, spread, lower, upper`.
+```{r}
+cis <- polls %>% mutate(x_hat = (spread + 1) / 2, se_hat = 2*sqrt((x_hat * (1 - x_hat)) / samplesize), lower = x_hat - qnorm(0.975) * se_hat, upper = x_hat + qnorm(0.975) * se_hat) %>% select(state, startdate, enddate, pollster, grade, spread, lower, upper)
+```
+2. You can add the final result to the `cis` table you just created using the `right_join` function like this:
+```{r}
+add <- results_us_election_2016 %>% 
+  mutate(actual_spread = clinton/100 - trump/100) %>% 
+  select(state, actual_spread)
+cis <- cis %>% 
+  mutate(state = as.character(state)) %>% 
+  left_join(add, by = "state")
+```
+Now determine how often the 95% confidence interval includes the actual result.
+```{r}
+cis %>% mutate(include = actual_spread >= lower & actual_spread <= upper) %>% summarise(mean(include == TRUE))
+```
+3. Repeat this, but show the proportion of hits for each pollster. Show only pollsters with more than 5 polls and order them from best to worst. Show the number of polls conducted by each pollster and the FiveThirtyEight grade of each pollster. Hint: use `n=n(), grade = grade[1]` in the call to summarize.
+```{r}
+hit <- cis %>% mutate(include = actual_spread >= lower & actual_spread <= upper) %>%
+  group_by(pollster) %>%
+  filter(n() > 5) %>%
+  summarize(proportion_hit = mean(include), n = n(), grade = grade[1])
+hit
+```
+4. Repeat exercise 3, but instead of pollster, stratify by state. Note that here we can’t show grades.
+```{r}
+hit <- cis %>% mutate(include = actual_spread >= lower & actual_spread <= upper) %>%
+  group_by(state) %>%
+  filter(n() > 5) %>%
+  summarize(proportion_hit = mean(include), n = n())
+hit
+```
+5. Make a barplot based on the result of exercise 4. Use `coord_flip`.
+```{r}
+hit %>% mutate(state = reorder(state, proportion_hit)) %>%
+  ggplot(aes(state, proportion_hit)) + geom_bar(stat = "identity") + coord_flip()
+```
+6. Add two columns to the `cis` table by computing, for each poll, the difference between the predicted spread and the actual spread, and define a column `hit` that is true if the signs are the same. Hint: use the function `sign`. Call the object `resids`.
+```{r}
+resids <- cis %>% mutate(error = spread - actual_spread, hit = sign(spread)==sign(actual_spread))
+```
+7. Create a plot like in exercise 5, but for the proportion of times the sign of the spread agreed.
+```{r}
+hit <- resids %>% group_by(state) %>%
+  filter(n()>5) %>%
+  summarize(proportion_hit = mean(hit), n = n())
+hit %>% mutate(state = reorder(state, proportion_hit)) %>%
+  ggplot(aes(state, proportion_hit)) + 
+  geom_bar(stat = "identity") +
+  coord_flip()
+```
+8. In exercise 7, we see that for most states the polls had it right 100% of the time. For only 9 states did the polls miss more than 25% of the time. In particular, notice that in Wisconsin every single poll got it wrong. In Pennsylvania and Michigan more than 90% of the polls had the signs wrong. Make a histogram of the errors. What is the median of these errors?
+```{r}
+hist(resids$error)
+median(resids$error)
+```
+9. We see that at the state level, the median error was 3% in favor of Clinton. The distribution is not centered at 0, but at 0.03. This is the general bias we described in the section above. Create a boxplot to see if the bias was general to all states or it affected some states differently. Use `filter(grade %in% c("A+","A","A-","B+") | is.na(grade)))` to only include pollsters with high grades.
+```{r}
+resids %>% filter(grade %in% c("A+","A","A-","B+") | is.na(grade)) %>%
+  mutate(state = reorder(state, error)) %>%
+  ggplot(aes(state, error)) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_boxplot() + 
+  geom_point()
+```
+10. Some of these states only have a few polls. Repeat exercise 9, but only include states with 5 good polls or more. Hint: use `group_by`, `filter` then `ungroup`. You will see that the West (Washington, New Mexico, California) underestimated Hillary’s performance, while the Midwest (Michigan, Pennsylvania, Wisconsin, Ohio, Missouri) overestimated it. In our simulation, we did not model this behavior since we added general bias, rather than a regional bias. Note that some pollsters may now be modeling correlation between similar states and estimating this correlation from historical data. To learn more about this, you can learn about random effects and mixed models.
+```{r}
+resids %>% filter(grade %in% c("A+","A","A-","B+") | is.na(grade)) %>%
+  mutate(state = reorder(state, error)) %>%
+  group_by(state) %>%
+  filter(n()>5) %>%
+  ungroup() %>%
+  ggplot(aes(state, error)) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_boxplot() + 
+  geom_point()
+```
+
+
+Compute the average and standard deviation for each pollster and examine the variability across the averages and how it compares to the variability within the pollsters, summarized by the standard deviation.
+
+```{r}
+polls %>% group_by(pollster) %>%
+  summarize(avg = mean(spread), sd = sd(spread)) 
+```
+
+
+
+## 퀴즈 그래프
+
+```{r}
+library(tidyverse)
+p <- 0.45
+I <- 5
+J <- 6
+d<-0.021
+N <- 2000
+X <- sapply(1:I, function(i) {
+  d + rnorm(J, 0, 2*sqrt(p*(1-p)/N))
+  })
+
+m <- as.data.frame(X) %>% rename(A=V1, B=V2, C=V3, D=V4, E=V5) %>% gather(pollster, spread) %>% ggplot(aes(pollster, spread)) + geom_point() +coord_flip()
+
+m
+
+```
+
+cowplot
+p1 <- 
+p2 <-
+p3 <-
+
+plot_grid(p1, p2, p3, ncol=3)
+
+N= 200, 2000, 20000을 가지고 이렇게 쓰세용. 하면 ... 굳굳.
+
+m1 <- .... gather %>% mutate(N=20)
+m2 <- .... gather %>% mutate(N=1000)
+m3 <- 
+
+m = rbind.data.frame(m1, m2, m3)
+ggplot 이거 써줌
++ facet_wrap(~N, ncoles=3)
+
+기말
+1) 몬테 카를로
+2) se, confidence interval 등 구하는 공식
+3) 시각화
+
+15.4 plot 어떻게 그릴래?
+tidyverse command써라. ggplot 써라.
+
+```{r}
+p <- 0.45
+N <- 1000
+
+x <- sample(c(0,1), size = N, replace = TRUE, prob = c(1-p, p))
+x_hat <- mean(x)
+
+B <- 10000
+x_hat <- replicate(B, {
+  x <- sample(c(0,1), size = N, replace = TRUE, prob = c(1-p, p))
+  mean(x)
+})
+
+mean(x_hat)
+sd(x_hat)
+
+```
+
+```{r}
+data.frame(x_hat) %>% ggplot((aes(x_hat))) + geom_histogram(color="black", fill="gray")
+```
+
+```{r}
+data.frame(x_hat) %>% ggplot(aes(x_hat, x_hat)) + geom_point()+geom_abline(intercept=0, slope=1)
+```
+
+이런 그림에 대한 해석도 해주세용.
+
+```{r}
+P1 <- data.frame(x_hat) %>% ggplot((aes(x_hat))) + geom_histogram(color="black", fill="gray")
+
+P2 <- data.frame(x_hat) %>% ggplot(aes(x_hat, x_hat)) + geom_point()+geom_abline(intercept=0, slope=1)
+library(cowplot)
+plot_grid(P1,P2)
+
+P3 <- data.frame(x_hat)%>% ggplot(aes(sample=x_hat))+ geom_qq() + geom_qq_line()
+
+
+```
+
+15.6 Confidence interval
+
+```{r}
+p <- 0.45
+N <- 1000
+x <- sample(c(0, 1), size = N, replace = TRUE, prob = c(1-p, p))
+x_hat <- mean(x)
+se_hat <- sqrt(x_hat * (1 - x_hat) / N)
+c(x_hat - 1.96 * se_hat, x_hat + 1.96 * se_hat)
+```
+
+geom_ribbon
+
+
+```{r}
+p=0.45
+N <- 1000
+B <- 10000
+inside <- replicate(B, {
+  x <- sample(c(0,1), size = N, replace = TRUE, prob = c(1-p, p))
+  x_hat <- mean(x)
+  se_hat <- sqrt(x_hat * (1 - x_hat) / N)
+  between(p, x_hat - 1.96 * se_hat, x_hat + 1.96 * se_hat)
+  return(c(x_hat, se_hat))
+})
+
+class(inside)
+#dim(inside) 
+#: 길이 보여준다
+d <- t(inside)
+# 가로세로 바꿔준다
+# mutate로 지정해서 confidence interval 뒤에 붙이기
+dd <- as.data.frame(d) %>% rename(x_hat=V1, se_hat=V2) %>% mutate(lower=x_hat-1.96*se_hat, upper=x_hat+1.96*se_hat, inside=ifelse(lower<=0.45 & upper>=0.45, 'Yes', 'No'), n=seq(1, B))
+dd
+
+# rename(x_hat=V1, se_hat=V1) as.data.frame 다음에 넣어주기
+#ifelse 써서 0.45가 그 안에 있으면 Yes 아니면 No 나오는 새로운 column
+#ifelse(between(p, dd$low, dd#high), "Yes", "No") 는 안된다. between은 원래 dataframe이 아니라 single value에만 적용 가능함
+```
+
+```{r}
+dd[1:100,] %>% ggplot()+ geom_point(aes(x=x_hat, y=n, color=inside)) +geom_errorbarh(aes(xmax=upper, xmin=lower, y=n, color=inside))
+```
+
+geom_errorbarh
+
+dslabs heights
+male/female /// height
+N수에 따라 반복수에 따라 어떻게 다르게 나오는가? 그림으로 보여주고 그 밑에 글을 달아야지...
