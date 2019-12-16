@@ -1,0 +1,224 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+Q1.   From   the   dataset   `heights`   in   the   `dslabs`   package,   please   describe   the distribution   of   male   and   female   heights.   If   you   pick   a   female   at   random,   what   is the   probability   that   she   is   61   inches   or   shorter? 
+
+A1.
+```{r}
+library(tidyverse)
+library(dslabs)
+library(dplyr)
+library(cowplot)
+```
+
+```{r}
+p1 <- heights %>% filter(sex=="Male") %>% ggplot(aes(height)) + geom_histogram() + labs(x="Male height") 
+p2 <- heights %>% filter(sex=="Female") %>% ggplot(aes(height)) + geom_histogram() + labs(x="Female height")
+plot_grid(p1, p2, nrow=2)
+```
+히스토그램으로 분포를 나타내었다.
+두 그래프 모두 대체적으로 정규분포 형태임을 확인할 수 있다.
+
+```{r}
+heights %>% filter(sex=="Male") %>% summarize(mean(height), sd(height))
+```
+
+남자의 경우 height mean이 69.31475, standard deviation이 3.611024이다.
+
+```{r}
+heights %>% filter(sex=="Female") %>% summarize(mean(height), sd(height))
+```
+
+여자의 경우 height mean이 64.93942, standard deviation이 3.760656이다.
+
+```{r}
+1 - pnorm(61, 64.9394, 3.760656)
+```
+
+normal distribution 형태를 따를 때 pnorm을 이용해 61 inches or shorter인 female의 probability를 구할 수 있다.
+0.8525724이다.
+
+Q2.   For   American   Roulette,   there   are   19   reds,   16   blacks   and   3   greens.   The   payout for   winning   on   green   is   15   dollars.   You   create   a   random   variable   that   is   the   sum   of your   winnings   after   betting   on   green   1000   times.   Start   your   code   by   setting   the seed   to   1.   Describe   your   random   variable   (e.g.   the   expected   value,   the   standard error).   Then,   create   a   Monte   Carlo   simulation   that   generates   1,000   outcomes   of   a random   variable,   and   then   describe   your   result.
+
+A2. Green에 걸리면 15달러를 받고, 그렇지 않으면 1달러를 잃는다.
+
+```{r}
+set.seed(1)
+p <- 3/(19+16+3)
+B <- 1000
+greeeen <- sample(c(15,-1), B, replace=TRUE, prob = c(p, 1-p))
+S <- sum(greeeen)
+S
+```
+
+이번 실행에서 472달러를 얻었다!
+
+Expected value of the sum S is
+
+```{r}
+m <- B * (p*15 + (1-p)*-1)
+m
+```
+
+기댓값은 263.1579
+
+Standard Error of S is
+
+```{r}
+se<-sqrt(B) * abs(15+1)*sqrt(p*(1-p))
+se
+```
+
+standard error는 136.4366이다.
+
+```{r}
+1-pnorm(0, m, se)
+```
+
+1000번 betting을 했을 때 돈을 얻을 확률은 0.9731216이다. 
+
+1000번의 결과가 나오는 monte carlo simulation을 했다.
+
+```{r}
+listoutcome <- replicate(B,{
+  X <- sample(c(15,-1), B, replace=TRUE, prob = c(p, 1-p))
+  sum(X)
+})
+mean(listoutcome)
+sd(listoutcome)
+```
+
+```{r}
+mean(listoutcome>0)
+```
+
+1000번 betting을 1000번 반복했을 때 돈을 얻을 확률의 mean을 구하면 0.975이다.
+
+Q3.   From   the   poll   example,   we   will   create   a   Monte   Carlo   simulation   for   p   =   0.45. You   will   compare   the   sampling   size   (N)   for   10,   1000,   and   the   repeat   size   (B)   for 100,   10000.   So   you   should   have   four   combinations   (10   N   x   100   B,   1000   N   x   100   B, 10   N   x   10000   B,   1000   N   x   10000   B).   Please   describe   your   Monte   Carlo   simulation results,   and   compare   four   combinations. 
+A3.
+```{r}
+p <- 0.45
+N1 <- 10
+B1 <- 100
+x_hat1 <- replicate(B1, {
+  x <- sample(c(0,1), size = N1, replace = TRUE, prob = c(1-p, p))
+  mean(x)
+})
+
+p <- 0.45
+N2 <- 1000
+B2 <- 100
+x_hat2 <- replicate(B2, {
+  x <- sample(c(0,1), size = N2, replace = TRUE, prob = c(1-p, p))
+  mean(x)
+})
+
+p <- 0.45
+N3 <- 10
+B3 <- 10000
+x_hat3 <- replicate(B3, {
+  x <- sample(c(0,1), size = N3, replace = TRUE, prob = c(1-p, p))
+  mean(x)
+})
+
+p <- 0.45
+N4 <- 1000
+B4 <- 10000
+x_hat4 <- replicate(B4, {
+  x <- sample(c(0,1), size = N4, replace = TRUE, prob = c(1-p, p))
+  mean(x)
+})
+```
+
+10   N   x   100   B,   1000   N   x   100   B, 10   N   x   10000   B,   1000   N   x   10000   B 각각의 경우를 x_hat1, x_hat2, x_hat3, x_hat4라고 나타내었다.
+
+```{r}
+mean(x_hat1)
+sd(x_hat1)
+
+mean(x_hat2)
+sd(x_hat2)
+
+mean(x_hat3)
+sd(x_hat3)
+
+mean(x_hat4)
+sd(x_hat4)
+```
+10   N   x   100   B,   1000   N   x   100   B, 10   N   x   10000   B,   1000   N   x   10000   B
+각각의 경우에 대해 mean, sd를 확인했다.
+mean은 대체적으로 비슷하지만 sd에서 차이를 보였다. 당연하게도 N이 10일때보다 1000일 때 sd값이 더 작았다. 
+
+```{r}
+plot1 <- data.frame(x_hat1) %>% ggplot((aes(x_hat1))) + geom_histogram(color="black", fill="gray")
+plot2 <- data.frame(x_hat2) %>% ggplot((aes(x_hat2))) + geom_histogram(color="black", fill="gray")
+plot3 <- data.frame(x_hat3) %>% ggplot((aes(x_hat3))) + geom_histogram(color="black", fill="gray")
+plot4 <- data.frame(x_hat4) %>% ggplot((aes(x_hat4))) + geom_histogram(color="black", fill="gray")
+
+plot_grid(plot1, plot2, plot3, plot4, ncol=2)
+```
+
+10   N   x   100   B인 x_hat1의 경우, N값이 작아sd도 컸고, B값이 작아 전체적인 샘플이 작았다. normal distribution이라고 확신할 수 없는 형태이다.
+1000   N   x   100   B인 x_hat의 경우, N값이 커서 sd가 작았다. 그러나 마찬가지로 normal distribution이라고 확신할 수 없는 형태이다.
+10   N   x   10000   B인 x_hat3의 경우, N값이 작아 sd가 컸다.
+1000   N   x   10000   B의 경우, N값이 커서 sd가 컸다. 가장 normal distribution이라고 확신할 수 있는 형태이다.
+
+```{r}
+inside1 <- replicate(B1, {
+  x <- sample(c(0,1), size = N1, replace = TRUE, prob = c(1-p, p))
+  x_hat <- mean(x)
+  se_hat <- sqrt(x_hat * (1 - x_hat) / N)
+  between(p, x_hat - 1.96 * se_hat, x_hat + 1.96 * se_hat)
+  return(c(x_hat, se_hat))
+})
+
+inside2 <- replicate(B2, {
+  x <- sample(c(0,1), size = N2, replace = TRUE, prob = c(1-p, p))
+  x_hat <- mean(x)
+  se_hat <- sqrt(x_hat * (1 - x_hat) / N)
+  between(p, x_hat - 1.96 * se_hat, x_hat + 1.96 * se_hat)
+  return(c(x_hat, se_hat))
+})
+
+inside3 <- replicate(B3, {
+  x <- sample(c(0,1), size = N3, replace = TRUE, prob = c(1-p, p))
+  x_hat <- mean(x)
+  se_hat <- sqrt(x_hat * (1 - x_hat) / N)
+  between(p, x_hat - 1.96 * se_hat, x_hat + 1.96 * se_hat)
+  return(c(x_hat, se_hat))
+})
+
+inside4 <- replicate(B4, {
+  x <- sample(c(0,1), size = N4, replace = TRUE, prob = c(1-p, p))
+  x_hat <- mean(x)
+  se_hat <- sqrt(x_hat * (1 - x_hat) / N)
+  between(p, x_hat - 1.96 * se_hat, x_hat + 1.96 * se_hat)
+  return(c(x_hat, se_hat))
+})
+
+d1 <- t(inside1)
+dd1 <- as.data.frame(d1) %>% rename(x_hat=V1, se_hat=V2) %>% mutate(lower=x_hat-1.96*se_hat, upper=x_hat+1.96*se_hat, inside=ifelse(lower<=0.45 & upper>=0.45, 'Yes', 'No'), n=seq(1,B1))
+
+d2 <- t(inside2)
+dd2 <- as.data.frame(d2) %>% rename(x_hat=V1, se_hat=V2) %>% mutate(lower=x_hat-1.96*se_hat, upper=x_hat+1.96*se_hat, inside=ifelse(lower<=0.45 & upper>=0.45, 'Yes', 'No'), n=seq(1, B2))
+
+d3 <- t(inside3)
+dd3 <- as.data.frame(d3) %>% rename(x_hat=V1, se_hat=V2) %>% mutate(lower=x_hat-1.96*se_hat, upper=x_hat+1.96*se_hat, inside=ifelse(lower<=0.45 & upper>=0.45, 'Yes', 'No'), n=seq(1, B3))
+
+d4 <- t(inside4)
+dd4 <- as.data.frame(d4) %>% rename(x_hat=V1, se_hat=V2) %>% mutate(lower=x_hat-1.96*se_hat, upper=x_hat+1.96*se_hat, inside=ifelse(lower<=0.45 & upper>=0.45, 'Yes', 'No'), n=seq(1, B4))
+
+p_1 <- dd1 %>% ggplot()+ geom_point(aes(x=x_hat, y=n, color=inside)) +geom_errorbarh(aes(xmax=upper, xmin=lower, y=n, color=inside)) + labs(x=x_hat1)
+
+p_2 <- dd2 %>% ggplot()+ geom_point(aes(x=x_hat, y=n, color=inside)) +geom_errorbarh(aes(xmax=upper, xmin=lower, y=n, color=inside))+ labs(x=x_hat2)
+
+p_3 <-  dd3 %>% ggplot()+ geom_point(aes(x=x_hat, y=n, color=inside)) +geom_errorbarh(aes(xmax=upper, xmin=lower, y=n, color=inside)) + labs(x=x_hat3)
+
+p_4 <-  dd4 %>% ggplot()+ geom_point(aes(x=x_hat, y=n, color=inside)) +geom_errorbarh(aes(xmax=upper, xmin=lower, y=n, color=inside)) + labs(x=x_hat4)
+
+plot_grid(p_1, p_2, p_3, p_4)
+```
+
+x_hat1, x_hat3의 경우 95% confidence interval 안에 p값이 들어간 경우가 없었다.
+x_hat2의 경우가 대부분 yes였고, x_hat3의 경우 yes가 더 많았으나 no도 많았다. B값이 클수록 yes가 많다(confidence interval 안에 p값이 들어있는 경우가 많다). x_hat2, x_hat을 비교했을 때 N이 작을수록 sd가 커지기 때문에 그 안에 p값이 들어있을 경우가 많았다.
