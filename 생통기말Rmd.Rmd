@@ -3,7 +3,6 @@ title: "R Notebook"
 output: html_notebook
 ---
 ## 퀴즈 답 모아보기
-
 ```{r}
 1. B <- 10000
 ball <- replicate(B, sample(box, 1))
