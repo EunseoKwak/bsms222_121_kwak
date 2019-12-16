@@ -97,6 +97,7 @@ mean(listoutcome>0)
 
 Q3.   From   the   poll   example,   we   will   create   a   Monte   Carlo   simulation   for   p   =   0.45. You   will   compare   the   sampling   size   (N)   for   10,   1000,   and   the   repeat   size   (B)   for 100,   10000.   So   you   should   have   four   combinations   (10   N   x   100   B,   1000   N   x   100   B, 10   N   x   10000   B,   1000   N   x   10000   B).   Please   describe   your   Monte   Carlo   simulation results,   and   compare   four   combinations. 
 A3.
+
 ```{r}
 p <- 0.45
 N1 <- 10
